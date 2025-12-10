@@ -1,3 +1,4 @@
+import { date } from 'zod';
 import api from './axios';
 
 export interface WeeklyPlanActivity {
@@ -11,6 +12,7 @@ export interface WeeklyPlanActivity {
   pointsAllocated?: number;
   pointsPerUnit?: number;
   unit: string;
+  TodayLogged:boolean;
 }
  
 export interface WeeklyPlan {
@@ -38,7 +40,10 @@ export const weeklyPlanAPI = {
   create: (data: CreateWeeklyPlanData) => api.post('/weeklyPlan/create', data),
   
   getCurrent: () => api.get<{ success: boolean; message: string; data: WeeklyPlan }>(
-    '/weeklyPlan/current'
+    '/weeklyPlan/current',{params:{date: new Date().toISOString().split('T')[0]}}
+  ),
+  Upcomming: () => api.get<{ success: boolean; message: string; data: WeeklyPlan }>(
+    '/weeklyPlan/upcoming'
   ),
 
   firstSetup: (activities:CreateWeeklyPlanData) => api.post('/weeklyPlan/firstTimeSetup', activities),

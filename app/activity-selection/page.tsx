@@ -7,8 +7,6 @@ import { weeklyPlanAPI } from '@/lib/api/weeklyPlan';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { log } from 'util';
-import { set } from 'zod';
 
 export default function ActivitySelectionPage() {
     const router = useRouter();
@@ -42,7 +40,7 @@ export default function ActivitySelectionPage() {
                 {
                     activityId: activity._id,
                     name: activity.name,
-                    cadence: 'daily',
+                    cadence: activity.allowedCadence[0],
                     targetValue: 0,
                     baseUnit: activity.baseUnit,
                 },
