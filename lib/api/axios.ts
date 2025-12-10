@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { getCookie } from '../store/authStore';
+import { getCookie,useAuthStore } from '../store/authStore';
+const {logout} = useAuthStore.getState();
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
@@ -46,7 +47,7 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         // Refresh failed, redirect to login
-        localStorage.removeItem('accessToken');
+        logout();
         if (typeof window !== 'undefined') {
           window.location.href = '/login';
         }

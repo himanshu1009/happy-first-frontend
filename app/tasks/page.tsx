@@ -3,13 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/authStore';
-import { dailyLogAPI, type SubmitDailyLogData } from '@/lib/api/dailyLog';
+import { dailyLogAPI, type SubmitDailyLogData, type DailySummary, type WeeklySummary } from '@/lib/api/dailyLog';
 import { weeklyPlanAPI } from '@/lib/api/weeklyPlan';
 import MainLayout from '@/components/layout/MainLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Activity } from 'lucide-react';
+import { Activity, Calendar, ChevronRight, Lock, Timer } from 'lucide-react';
 import type { WeeklyPlan, WeeklyPlanActivity } from '@/lib/api/weeklyPlan';
 
 export default function TasksPage() {
@@ -20,6 +20,10 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const [noPlanError, setNoPlanError] = useState('');
+  const [dailySummary, setDailySummary] = useState<DailySummary | null>(null);
+  const [weeklySummary, setWeeklySummary] = useState<WeeklySummary | null>(null);
+  const [timeUntilMidnight, setTimeUntilMidnight] = useState('');
 
   useEffect(() => {
     // Wait for hydration before checking auth
@@ -30,27 +34,66 @@ export default function TasksPage() {
       return;
     }
 
-    const fetchWeeklyPlan = async () => {
+    const fetchData = async () => {
       try {
-        const response = await weeklyPlanAPI.getCurrent();
-        setWeeklyPlan(response.data.data);
+        const [planResponse, dailyResponse, weeklyResponse] = await Promise.all([
+          weeklyPlanAPI.getCurrent(),
+          dailyLogAPI.getSummary('daily').catch(() => null),
+          dailyLogAPI.getSummary('weekly').catch(() => null),
+        ]);
+        
+        setWeeklyPlan(planResponse.data.data);
+        setNoPlanError('');
         
         // Initialize activity values
         const initialValues: Record<string, number> = {};
-        response.data.data.activities.forEach((activity: WeeklyPlanActivity) => {
-          const activityId = typeof activity.activityId === 'object' 
-            ? activity.activityId._id 
-            : activity.activityId;
+        planResponse.data.data.activities.forEach((activity: WeeklyPlanActivity) => {
+          const activityId = typeof activity.activity === 'object' 
+            ? activity.activity 
+            : activity.activity;
           initialValues[activityId] = 0;
         });
         setActivities(initialValues);
-      } catch (err) {
-        console.error('Failed to fetch weekly plan:', err);
+        
+        // Set summaries
+        if (dailyResponse?.data?.data) {
+          setDailySummary(dailyResponse.data.data as DailySummary);
+        }
+        if (weeklyResponse?.data?.data) {
+          setWeeklySummary(weeklyResponse.data.data as WeeklySummary);
+        }
+      } catch (err: unknown) {
+        console.error('Failed to fetch data:', err);
+        const errorMessage = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        if (errorMessage === 'No active weekly plan found') {
+          setNoPlanError('No active weekly plan found. Please create a weekly plan first to start logging your daily activities.');
+        }
       }
     };
 
-    fetchWeeklyPlan();
+    fetchData();
   }, [accessToken, user, router, isHydrated]);
+
+  // Timer countdown effect
+  useEffect(() => {
+    const updateTimer = () => {
+      const now = new Date();
+      const midnight = new Date();
+      midnight.setHours(24, 0, 0, 0);
+      
+      const diff = midnight.getTime() - now.getTime();
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      setTimeUntilMidnight(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,14 +117,14 @@ export default function TasksPage() {
       // Reset form
       const resetValues: Record<string, number> = {};
       weeklyPlan?.activities.forEach((activity) => {
-        const activityId = typeof activity.activityId === 'object' 
-          ? activity.activityId._id 
-          : activity.activityId;
+        const activityId = typeof activity.activity === 'object' 
+          ? activity.activity 
+          : activity.activity;
         resetValues[activityId] = 0;
       });
       setActivities(resetValues);
-    } catch (err) {
-      setError((err as any).response?.data?.message || 'Failed to submit daily log');
+    } catch (err: unknown) {
+      setError((err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to submit daily log');
     } finally {
       setLoading(false);
     }
@@ -143,6 +186,28 @@ export default function TasksPage() {
           </CardContent>
         </Card>
 
+        {/* Score Cards */}
+        <div className="grid grid-cols-2 gap-3">
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+            <CardContent className="p-4 text-center">
+              <div className="text-sm text-green-700 mb-1 font-medium">Today&apos;s Score</div>
+              <div className="text-3xl font-bold text-green-900">
+                {dailySummary?.totalPoints.toFixed(2) || 0}
+              </div>
+              <div className="text-xs text-green-600 mt-1">points earned</div>
+            </CardContent>
+          </Card>
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+            <CardContent className="p-4 text-center">
+              <div className="text-sm text-purple-700 mb-1 font-medium">Week Score</div>
+              <div className="text-3xl font-bold text-purple-900">
+                {weeklySummary?.totalPoints.toFixed(2) || 0}
+              </div>
+              <div className="text-xs text-purple-600 mt-1">{weeklySummary?.totalDaysLogged || 0} days logged</div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Status Cards */}
         <div className="grid grid-cols-2 gap-3">
           <Card className="bg-white">
@@ -190,9 +255,39 @@ export default function TasksPage() {
           </Card>
         </div>
 
+        {/* Upcoming Plans Section */}
+        <Card 
+          className="bg-gradient-to-br from-indigo-50 to-indigo-100 border-indigo-200 cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => router.push('/upcoming')}
+        >
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Calendar className="w-6 h-6 text-indigo-600" />
+                <div>
+                  <h3 className="font-semibold text-indigo-900">Upcoming Plans</h3>
+                  <p className="text-xs text-indigo-700">View and manage your weekly plans</p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-indigo-600" />
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Today's Tasks Form */}
         <div className="space-y-2">
           <h3 className="font-semibold text-gray-900">📋 Today&apos;s Tasks</h3>
+          
+          {noPlanError && (
+            <Card className="bg-yellow-50 border-yellow-200">
+              <CardContent className="p-4 text-center">
+                <div className="text-4xl mb-2">📅</div>
+                <h3 className="font-semibold text-yellow-900 mb-2">No Active Weekly Plan</h3>
+                <p className="text-sm text-yellow-700 mb-3">{noPlanError}</p>
+                
+              </CardContent>
+            </Card>
+          )}
           
           {success && (
             <div className="bg-green-50 text-green-700 p-3 rounded-lg text-sm border border-green-200">
@@ -206,12 +301,13 @@ export default function TasksPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-3">
-            {weeklyPlan?.activities.map((activity) => {
-              const activityData = typeof activity.activityId === 'object' 
-                ? activity.activityId 
+          {!noPlanError && (
+            <form onSubmit={handleSubmit} className="space-y-3">
+              {weeklyPlan?.activities.map((activity) => {
+              const activityData = typeof activity === 'object' 
+                ? activity 
                 : null;
-              const activityId = activityData?._id || '';
+              const activityId = activityData?.activity || '';
               
               return (
                 <Card key={activityId}>
@@ -219,39 +315,61 @@ export default function TasksPage() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <span className="text-xl">
-                          {activityData?.name === 'Steps' && '👣'}
-                          {activityData?.name === 'Sleep' && '😴'}
-                          {activityData?.name === 'Water' && '💧'}
-                          {activityData?.name === 'Yoga' && '🧘'}
-                          {activityData?.name === 'Gym' && '🏋️'}
-                          {activityData?.name === 'Floors' && '🏢'}
-                          {!['Steps', 'Sleep', 'Water', 'Yoga', 'Gym', 'Floors'].includes(activityData?.name || '') && '✅'}
+                          {activityData?.label === 'Steps' && '👣'}
+                          {activityData?.label === 'Sleep' && '😴'}
+                          {activityData?.label === 'Water' && '💧'}
+                          {activityData?.label === 'Yoga' && '🧘'}
+                          {activityData?.label === 'Gym' && '🏋️'}
+                          {activityData?.label === 'Floors' && '🏢'}
+                          {!['Steps', 'Sleep', 'Water', 'Yoga', 'Gym', 'Floors'].includes(activityData?.label || '') && '✅'}
                         </span>
                         <div>
-                          <p className="font-medium text-sm">{activityData?.name}</p>
+                          <p className="font-medium text-sm">{activityData?.label}</p>
                           <p className="text-xs text-gray-600">
-                            Target: {activity.targetValue} {activityData?.baseUnit}
+                            Target: {activity.targetValue} {activityData?.unit}
                             {activity.cadence === 'daily' ? '/day' : '/week'}
                           </p>
                         </div>
                       </div>
-                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                      {/* <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
                         High
-                      </span>
+                      </span> */}
                     </div>
                     <div className="flex items-center gap-2">
-                      <Input
-                        type="number"
-                        min="0"
-                        step="any"
-                        value={activities[activityId] || 0}
-                        onChange={(e) => handleActivityChange(activityId, e.target.value)}
-                        placeholder={`Enter ${activityData?.baseUnit}`}
-                        className="flex-1"
-                      />
-                      <span className="text-sm text-gray-600 min-w-20 text-right">
-                        0.00 / 5 pts
-                      </span>
+                      {activity.TodayLogged ? (
+                        <>
+                          <div className="flex-1 relative">
+                            <Input
+                              type="number"
+                              disabled
+                              value={activities[activityId] || 0}
+                              className="flex-1 bg-gray-100 cursor-not-allowed opacity-60"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                              <Lock className="w-5 h-5 text-gray-500" />
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-gray-600 min-w-20">
+                            <Timer className="w-4 h-4" />
+                            <span className="font-mono">{timeUntilMidnight}</span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={activities[activityId] || 0}
+                            onChange={(e) => handleActivityChange(activityId, e.target.value)}
+                            placeholder={`Enter ${activityData?.unit}`}
+                            className="flex-1"
+                          />
+                          <span className="text-sm text-gray-600 min-w-20 text-right">
+                            {activity.cadence=="daily"?`${activity.pointsPerUnit?.toFixed(2)} pts/Day`:`${(activity.pointsPerUnit!).toFixed(2)} pts/${activityData?.unit} (weekly)`}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -266,23 +384,8 @@ export default function TasksPage() {
               {loading ? 'Submitting...' : 'Submit Daily Log'}
             </Button>
           </form>
+          )}
         </div>
-
-        {/* Floors Climbed Section */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-start gap-2 mb-2">
-              <span className="text-lg">🏢</span>
-              <div className="flex-1">
-                <p className="font-medium text-sm">Floors Climbed</p>
-                <p className="text-xs text-gray-600">Medium</p>
-              </div>
-            </div>
-            <div className="text-xs text-gray-600">
-              0 / 5 km • 0.00 / 5 pts
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </MainLayout>
   );

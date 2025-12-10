@@ -12,13 +12,16 @@ export interface SubmitDailyLogData {
 
 export interface DailySummary {
   date: string;
+
   activities: Array<{
     activityId: string;
-    name: string;
-    value: number;
-    targetValue: number;
-    percentComplete: number;
+    achieved: number;
+    activity: string;
+    pointsAllocated: number;
+    target: number;
     pointsEarned: number;
+    unit: string;
+    status: 'partial' | 'completed'|'pending';
   }>;
   totalPoints: number;
   streak: number;
@@ -36,18 +39,39 @@ export interface WeeklySummary {
     pointsEarned: number;
   }>;
   totalPoints: number;
-  daysLogged: number;
+  totalDaysLogged: number;
+}
+export interface MonthlySummary {
+  dailyBreakdown: Array<{
+    date: string;
+    points: number;
+    activityCount: number;
+  }>;
+  activities: Array<{
+    activityId: string;
+    name: string;
+    totalValue: number;
+    targetValue: number;
+    percentComplete: number;
+    pointsEarned: number;
+  }>;
+  period: {
+    start:Date;
+    end:Date;
+  };
+  totalPoints: number;
+  totalDaysLogged: number;
 }
 
 export const dailyLogAPI = {
-  submit: (data: SubmitDailyLogData) => api.post('/dailyLog', data),
+  submit: (data: SubmitDailyLogData) => api.post('/dailyLog/web', data),
   
-  getSummary: (period: 'daily' | 'weekly', date?: string) => {
+  getSummary: (period: 'daily' | 'weekly'|'monthly', date?: string) => {
     const params = date ? { period, date } : { period };
     return api.get<{
       success: boolean;
       message: string;
-      data: DailySummary | WeeklySummary;
+      data: DailySummary | WeeklySummary| MonthlySummary;
     }>('/dailyLog/summary', { params });
   },
 };
