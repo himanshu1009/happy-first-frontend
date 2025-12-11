@@ -504,7 +504,7 @@ export default function HomePage() {
                       ? activity
                       : null;
                     const progressPercentage = Math.min(
-                      Math.round(((activity.achievedUnits || 0) / activity.targetValue) * 100),
+                      Math.round(((activity.achieved || 0) / activity.targetValue) * 100),
                       100
                     );
 
@@ -522,7 +522,7 @@ export default function HomePage() {
                           </div>
                           <div className="text-right">
                             <p className="text-sm font-semibold text-green-600">
-                              {activity.achievedUnits || 0} / {activity.targetValue}
+                              {activity.achieved || 0} / {activity.targetValue}
                             </p>
                             <p className="text-xs text-gray-500">
                               {progressPercentage}%
