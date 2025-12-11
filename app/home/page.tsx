@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/lib/store/authStore';
+import { useAuthStore ,getCookie,setCookie} from '@/lib/store/authStore';
 import { weeklyPlanAPI } from '@/lib/api/weeklyPlan';
 import { dailyLogAPI, type DailySummary, type MonthlySummary } from '@/lib/api/dailyLog';
 import MainLayout from '@/components/layout/MainLayout';
@@ -127,7 +127,7 @@ export default function HomePage() {
         ? new Date(user.createdAt).toDateString() === new Date().toDateString()
         : false;
       
-      if (isUserCreatedToday&& localStorage.getItem('hasSeenWelcomeBanner')!=null&&localStorage.getItem('hasSeenWelcomeBanner')==='false') {
+      if (isUserCreatedToday&& getCookie('hasSeenWelcomeBanner')!=null&&getCookie('hasSeenWelcomeBanner')==='false') {
         setShowWelcomeBanner(true);
       }
     };
@@ -156,7 +156,7 @@ export default function HomePage() {
 
   const handleCloseWelcomeBanner = () => {
     setShowWelcomeBanner(false);
-    localStorage.setItem('hasSeenWelcomeBanner', 'true');
+    setCookie('hasSeenWelcomeBanner', 'true', 30);
   };
 
   const stats = {

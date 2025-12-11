@@ -47,7 +47,7 @@ interface AuthState {
 }
 
 // Helper function to set cookie
-const setCookie = (name: string, value: string, days: number = 7) => {
+export const setCookie = (name: string, value: string, days: number = 7) => {
   if (typeof window === 'undefined') return;
   
   const expires = new Date();
