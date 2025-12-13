@@ -41,8 +41,9 @@ export default function ActivitySelectionPage() {
                     activityId: activity._id,
                     name: activity.name,
                     cadence: activity.allowedCadence[0],
-                    targetValue: 0,
+                    targetValue: activity.values.find((v: any) => v.tier === 1).minVal || 0,
                     baseUnit: activity.baseUnit,
+                    values: activity.values,
                 },
             ]);
         }
@@ -206,16 +207,42 @@ export default function ActivitySelectionPage() {
                                                 </label>
                                                 <Input
                                                     type="number"
-                                                    value={activity.targetValue}
-                                                    onChange={(e) =>
-                                                        updateActivityTarget(
-                                                            activity.activityId,
-                                                            'targetValue',
-                                                            parseFloat(e.target.value) || 0
-                                                        )
-                                                    }
-                                                    placeholder="0"
-                                                    min="0"
+                                                    step="any"
+                                                    value={activity.targetValue }
+                                                    max={activity.values.find((v: any) => v.tier === 1)?.maxVal || 100000}
+                                                    min={activity.values.find((v: any) => v.tier === 1)?.minVal || 0}
+                                                    onChange={(e) => {
+                                                        const minVal = activity.values.find((v: any) => v.tier === 1)?.minVal || 0;
+                                                        const maxVal = activity.values.find((v: any) => v.tier === 1)?.maxVal || 100000;
+                                                        const inputValue = parseFloat(e.target.value);
+                                                        
+                                                        if (!isNaN(inputValue)) {
+                                                            const clampedValue = Math.max(minVal, Math.min(maxVal, inputValue));
+                                                            updateActivityTarget(
+                                                                activity.activityId,
+                                                                'targetValue',
+                                                                clampedValue
+                                                            );
+                                                        } else if (e.target.value === '') {
+                                                            updateActivityTarget(
+                                                                activity.activityId,
+                                                                'targetValue',
+                                                                0
+                                                            );
+                                                        }
+                                                    }}
+                                                    onBlur={(e) => {
+                                                        const minVal = activity.values.find((v: any) => v.tier === 1)?.minVal || 0;
+                                                        const maxVal = activity.values.find((v: any) => v.tier === 1)?.maxVal || 100000;
+                                                        const inputValue = parseFloat(e.target.value);
+                                                        
+                                                        if (isNaN(inputValue) || inputValue < minVal) {
+                                                            updateActivityTarget(activity.activityId, 'targetValue', minVal);
+                                                        } else if (inputValue > maxVal) {
+                                                            updateActivityTarget(activity.activityId, 'targetValue', maxVal);
+                                                        }
+                                                    }}
+                                                    placeholder={String(activity.values.find((v: any) => v.tier === 1)?.minVal || 0)}
                                                 />
                                             </div>
                                         </div>

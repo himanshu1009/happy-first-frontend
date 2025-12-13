@@ -634,25 +634,23 @@ export default function HomePage() {
                             <div>
                               <p className="font-medium text-sm">{activityData?.label || 'Activity'}</p>
                               <p className="text-xs text-gray-600">
-                                {activity.targetValue} {activityData?.unit}
+                                {activity.targetValue} {activityData?.unit} ({activity.cadence === 'daily' ? 'Daily' : 'Weekly'})
                               </p>
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-sm font-semibold text-green-600">
-                              {activity.achieved || 0} / {activity.targetValue}
+                            <p className="text-2xl font-bold text-green-600">
+                             + {activity.achieved || 0} <span className="text-sm font-normal text-gray-500">{activityData?.unit}</span>
                             </p>
-                            <p className="text-xs text-gray-500">
-                              {progressPercentage}%
-                            </p>
+                             
                           </div>
                         </div>
-                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                        {/* <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                           <div
                             className="h-full bg-gradient-to-r from-green-500 to-green-600 rounded-full transition-all duration-300"
                             style={{ width: `${progressPercentage}%` }}
                           ></div>
-                        </div>
+                        </div> */}
                       </div>
                     );
                   })
