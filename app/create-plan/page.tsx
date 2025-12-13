@@ -47,19 +47,36 @@ export default function CreatePlanPage() {
       return;
     }
 
-    // Check if today is Friday (5), Saturday (6), or Sunday (0)
-    const today = new Date();
-    const dayOfWeek = today.getDay();
-    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    setCurrentDay(dayNames[dayOfWeek]);
-    
-    // Unlock on Friday (5), Saturday (6), Sunday (0)
-    const unlocked = dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0;
-    setIsUnlocked(unlocked);
+    // Check if an upcoming plan already exists
+    const checkUpcomingPlan = async () => {
+      try {
+        const response = await weeklyPlanAPI.Upcomming();
+        if (response.data.data) {
+          // Upcoming plan exists, redirect to upcoming page
+          router.push('/upcoming');
+          return;
+        }
+      } catch (error) {
+        // No upcoming plan exists, continue
+        console.log('No upcoming plan found, user can create one');
+      }
 
-    if (unlocked) {
-      fetchActivities();
-    }
+      // Check if today is Friday (5), Saturday (6), or Sunday (0)
+      const today = new Date();
+      const dayOfWeek = today.getDay();
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      setCurrentDay(dayNames[dayOfWeek]);
+      
+      // Unlock on Friday (5), Saturday (6), Sunday (0)
+      const unlocked = dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0;
+      setIsUnlocked(unlocked);
+
+      if (unlocked) {
+        fetchActivities();
+      }
+    };
+
+    checkUpcomingPlan();
   }, [accessToken, user, router, isHydrated]);
 
   const fetchActivities = async () => {
@@ -138,7 +155,7 @@ export default function CreatePlanPage() {
       await weeklyPlanAPI.create(planData);
       
       // Redirect to home page
-      router.push('/home');
+      router.replace('/upcoming');
     } catch (error: unknown) {
       console.error('Failed to create weekly plan:', error);
       const errorMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -359,31 +376,20 @@ export default function CreatePlanPage() {
                         max={activity.values.find(v=>v.tier===tiers)?.maxVal || 0}
                         value={activity.targetValue || ''}
                         onChange={(e) => {
-                          const minVal = activity.values.find(v=>v.tier===tiers)?.minVal || 0;
-                          const maxVal = activity.values.find(v=>v.tier===tiers)?.maxVal || 100000;
-                          const inputValue = parseFloat(e.target.value);
-                          
-                          // Clamp the value between min and max
-                          if (!isNaN(inputValue)) {
-                            const clampedValue = Math.max(minVal, Math.min(maxVal, inputValue));
-                            updateActivityTarget(
-                              activity.activityId,
-                              'targetValue',
-                              clampedValue
-                            );
-                          } else if (e.target.value === '') {
-                            updateActivityTarget(
-                              activity.activityId,
-                              'targetValue',
-                              0
-                            );
-                          }
+                          // Allow free typing without clamping
+                          const inputValue = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                          updateActivityTarget(
+                            activity.activityId,
+                            'targetValue',
+                            inputValue
+                          );
                         }}
                         onBlur={(e) => {
                           const minVal = activity.values.find(v=>v.tier===tiers)?.minVal || 0;
                           const maxVal = activity.values.find(v=>v.tier===tiers)?.maxVal || 100000;
                           const inputValue = parseFloat(e.target.value);
                           
+                          // Only validate and clamp when user finishes typing
                           if (isNaN(inputValue) || inputValue < minVal) {
                             updateActivityTarget(activity.activityId, 'targetValue', minVal);
                           } else if (inputValue > maxVal) {

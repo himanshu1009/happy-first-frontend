@@ -212,30 +212,20 @@ export default function ActivitySelectionPage() {
                                                     max={activity.values.find((v: any) => v.tier === 1)?.maxVal || 100000}
                                                     min={activity.values.find((v: any) => v.tier === 1)?.minVal || 0}
                                                     onChange={(e) => {
-                                                        const minVal = activity.values.find((v: any) => v.tier === 1)?.minVal || 0;
-                                                        const maxVal = activity.values.find((v: any) => v.tier === 1)?.maxVal || 100000;
-                                                        const inputValue = parseFloat(e.target.value);
-                                                        
-                                                        if (!isNaN(inputValue)) {
-                                                            const clampedValue = Math.max(minVal, Math.min(maxVal, inputValue));
-                                                            updateActivityTarget(
-                                                                activity.activityId,
-                                                                'targetValue',
-                                                                clampedValue
-                                                            );
-                                                        } else if (e.target.value === '') {
-                                                            updateActivityTarget(
-                                                                activity.activityId,
-                                                                'targetValue',
-                                                                0
-                                                            );
-                                                        }
+                                                        // Allow free typing without clamping
+                                                        const inputValue = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                                                        updateActivityTarget(
+                                                            activity.activityId,
+                                                            'targetValue',
+                                                            inputValue
+                                                        );
                                                     }}
                                                     onBlur={(e) => {
                                                         const minVal = activity.values.find((v: any) => v.tier === 1)?.minVal || 0;
                                                         const maxVal = activity.values.find((v: any) => v.tier === 1)?.maxVal || 100000;
                                                         const inputValue = parseFloat(e.target.value);
                                                         
+                                                        // Only validate and clamp when user finishes typing
                                                         if (isNaN(inputValue) || inputValue < minVal) {
                                                             updateActivityTarget(activity.activityId, 'targetValue', minVal);
                                                         } else if (inputValue > maxVal) {
