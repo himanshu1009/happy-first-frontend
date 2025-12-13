@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/authStore';
-import { dailyLogAPI, type SubmitDailyLogData, type DailySummary, type WeeklySummary } from '@/lib/api/dailyLog';
+import { dailyLogAPI, type SubmitDailyLogData } from '@/lib/api/dailyLog';
 import { weeklyPlanAPI } from '@/lib/api/weeklyPlan';
 import MainLayout from '@/components/layout/MainLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Activity, Calendar, ChevronRight, Lock, Timer } from 'lucide-react';
 import type { WeeklyPlan, WeeklyPlanActivity } from '@/lib/api/weeklyPlan';
+import { authAPI } from '@/lib/api/auth';
 
 export default function TasksPage() {
   const router = useRouter();
@@ -22,9 +23,22 @@ export default function TasksPage() {
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [noPlanError, setNoPlanError] = useState('');
-  const [dailySummary, setDailySummary] = useState<DailySummary | null>(null);
-  const [weeklySummary, setWeeklySummary] = useState<WeeklySummary | null>(null);
   const [timeUntilMidnight, setTimeUntilMidnight] = useState('');
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => { 
+     const fetchUser =async()=>{
+      try{
+        const userData=await authAPI.userInfo();
+        useAuthStore.getState().setUser(userData.data.data);
+        setUserData(userData.data.data);
+      }
+      catch(err){
+        console.error('Failed to fetch user data:', err);
+      }
+    }
+    fetchUser();
+  },[]);
 
   useEffect(() => {
     // Wait for hydration before checking auth
@@ -37,10 +51,8 @@ export default function TasksPage() {
 
     const fetchData = async () => {
       try {
-        const [planResponse, dailyResponse, weeklyResponse] = await Promise.all([
+        const [planResponse,] = await Promise.all([
           weeklyPlanAPI.getCurrent(),
-          dailyLogAPI.getSummary('daily').catch(() => null),
-          dailyLogAPI.getSummary('weekly').catch(() => null),
         ]);
         
         setWeeklyPlan(planResponse.data.data);
@@ -65,12 +77,6 @@ export default function TasksPage() {
         setCheckboxActivities(initialCheckboxValues);
         
         // Set summaries
-        if (dailyResponse?.data?.data) {
-          setDailySummary(dailyResponse.data.data as DailySummary);
-        }
-        if (weeklyResponse?.data?.data) {
-          setWeeklySummary(weeklyResponse.data.data as WeeklySummary);
-        }
       } catch (err: unknown) {
         console.error('Failed to fetch data:', err);
         const errorMessage = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -79,9 +85,9 @@ export default function TasksPage() {
         }
       }
     };
-
     fetchData();
   }, [accessToken, user, router, isHydrated]);
+
 
   // Timer countdown effect
   useEffect(() => {
@@ -435,6 +441,7 @@ export default function TasksPage() {
                                 <Input
                                   type="number"
                                   disabled
+                                  max={activityData?.values.find(v=>v.tier===1)?.maxVal || 100000}
                                   value={activities[activityId] || 0}
                                   className="flex-1 bg-gray-100 cursor-not-allowed opacity-60"
                                 />
@@ -470,10 +477,31 @@ export default function TasksPage() {
                             <>
                               <Input
                                 type="number"
-                                min="0"
+                                min={0}
+                                max={activityData?.values.find(v=>v.tier===1)?.maxVal || 100000}
                                 step="any"
                                 value={activities[activityId] || 0}
-                                onChange={(e) => handleActivityChange(activityId, e.target.value)}
+                                onChange={(e) => {
+                                  const maxVal = activityData?.values.find(v=>v.tier===1)?.maxVal || 100000;
+                                  const inputValue = parseFloat(e.target.value);
+                                  
+                                  if (!isNaN(inputValue)) {
+                                    const clampedValue = Math.max(0, Math.min(maxVal, inputValue));
+                                    handleActivityChange(activityId, clampedValue.toString());
+                                  } else if (e.target.value === '') {
+                                    handleActivityChange(activityId, '0');
+                                  }
+                                }}
+                                onBlur={(e) => {
+                                  const maxVal = activityData?.values.find(v=>v.tier===1)?.maxVal || 100000;
+                                  const inputValue = parseFloat(e.target.value);
+                                  
+                                  if (isNaN(inputValue) || inputValue < 0) {
+                                    handleActivityChange(activityId, '0');
+                                  } else if (inputValue > maxVal) {
+                                    handleActivityChange(activityId, maxVal.toString());
+                                  }
+                                }}
                                 placeholder={`Enter ${activityData?.unit}`}
                                 className="flex-1"
                               />

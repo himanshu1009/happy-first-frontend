@@ -7,6 +7,13 @@ export interface Activity {
   description: string;
   tier: number;
   allowedCadence: ('daily' | 'weekly')[];
+  values:[
+    {
+      tier:number;
+      maxVal:number;
+      minVal:number;
+    }
+  ]
 }
 
 export const activityAPI = {
@@ -24,5 +31,11 @@ export const activityAPI = {
       { params }
     );
   },
+
+  getlistTiers: () => {
+    return api.get<{ success: boolean; message: string; data: {activities:Activity[],tier:number} }>(
+      '/activity/list/tiers'
+    );
+  }
 };
 

@@ -14,6 +14,13 @@ export interface WeeklyPlanActivity {
   pointsPerUnit?: number;
   unit: string;
   TodayLogged:boolean;
+  values:[
+    {
+      tier:number;
+      maxVal:number;
+      minVal:number;
+    }
+  ]
 }
  
 export interface WeeklyPlan {
