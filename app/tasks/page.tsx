@@ -482,20 +482,14 @@ export default function TasksPage() {
                                 step="any"
                                 value={activities[activityId] || 0}
                                 onChange={(e) => {
-                                  const maxVal = activityData?.values.find(v=>v.tier===1)?.maxVal || 100000;
-                                  const inputValue = parseFloat(e.target.value);
-                                  
-                                  if (!isNaN(inputValue)) {
-                                    const clampedValue = Math.max(0, Math.min(maxVal, inputValue));
-                                    handleActivityChange(activityId, clampedValue.toString());
-                                  } else if (e.target.value === '') {
-                                    handleActivityChange(activityId, '0');
-                                  }
+                                  // Allow free typing without clamping
+                                  handleActivityChange(activityId, e.target.value);
                                 }}
                                 onBlur={(e) => {
                                   const maxVal = activityData?.values.find(v=>v.tier===1)?.maxVal || 100000;
                                   const inputValue = parseFloat(e.target.value);
                                   
+                                  // Only validate and clamp when user finishes typing
                                   if (isNaN(inputValue) || inputValue < 0) {
                                     handleActivityChange(activityId, '0');
                                   } else if (inputValue > maxVal) {
