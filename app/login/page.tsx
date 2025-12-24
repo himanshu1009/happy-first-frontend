@@ -39,7 +39,7 @@ export default function LoginPage() {
       setUser(user);
       setAccessToken(accessToken);
 
-      router.push('/home');
+      router.push('/select-profile');
     } catch (err) {
       setError((err as any).response?.data?.message || 'Login failed');
     } finally {
@@ -83,7 +83,7 @@ export default function LoginPage() {
       setUser(user);
       setAccessToken(accessToken);
 
-      router.push('/home');
+      router.push('/select-profile');
     } catch (err) {
       setError((err as any).response?.data?.message || 'Invalid OTP');
     } finally {

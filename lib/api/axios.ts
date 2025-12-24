@@ -30,7 +30,14 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Don't handle 401 errors on login/register endpoints
+    const isAuthEndpoint = originalRequest.url?.includes('/userAuth/login') || 
+                          originalRequest.url?.includes('/userAuth/register') ||
+                          originalRequest.url?.includes('/userAuth/verify-otp') ||
+                          originalRequest.url?.includes('/userAuth/req-login-otp') ||
+                          originalRequest.url?.includes('/userAuth/login-otp-verify');
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
 
       try {

@@ -1,6 +1,14 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+interface FamilyMember {
+  name: string;
+  relationship: string;
+  age: number;
+  gender: "male" | "female" | "other";
+  level?: string;
+}
+
 interface User {
   _id: string;
   phoneNumber: string;
@@ -33,15 +41,23 @@ interface User {
     summaryOptIn?: boolean;
     unlockedSets?: number[];
   };
+  familyMembers?: FamilyMember[];
+  level?: string;
+  HappyPoints?: number;
 }
 
 interface AuthState {
   user: User | null;
   accessToken: string | null;
+  selectedProfile: FamilyMember | null;
+  profileSelectedInSession: boolean;
   isAuthenticated: () => boolean;
   isHydrated: boolean;
   setUser: (user: User | null) => void;
   setAccessToken: (token: string | null) => void;
+  setSelectedProfile: (profile: FamilyMember | null) => void;
+  setProfileSelectedInSession: (selected: boolean) => void;
+  needsProfileSelection: () => boolean;
   logout: () => void;
   setHydrated: (hydrated: boolean) => void;
 }
@@ -81,6 +97,8 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       user: null,
       accessToken: typeof window !== 'undefined' ? getCookie("accessToken") : null,
+      selectedProfile: null,
+      profileSelectedInSession: false,
       isAuthenticated: () => !!get().accessToken && !!get().user,
       isHydrated: false,
       setUser: (user) => set({ user }),
@@ -92,16 +110,30 @@ export const useAuthStore = create<AuthState>()(
         }
         set({ accessToken: token });
       },
+      setSelectedProfile: (profile) => {
+        set({ selectedProfile: profile, profileSelectedInSession: true });
+      },
+      setProfileSelectedInSession: (selected) => {
+        set({ profileSelectedInSession: selected });
+      },
+      needsProfileSelection: () => {
+        const state = get();
+        const hasUser = !!state.user;
+        const hasMultipleProfiles = (state.user?.familyMembers?.length || 0) > 0;
+        const notSelectedInSession = !state.profileSelectedInSession;
+        return hasUser && hasMultipleProfiles && notSelectedInSession;
+      },
       logout: () => {
         deleteCookie("accessToken");
-        set({ user: null, accessToken: null });
+        set({ user: null, accessToken: null, selectedProfile: null, profileSelectedInSession: false });
       },
       setHydrated: (hydrated) => set({ isHydrated: hydrated }),
     }),
     {
       name: "auth-storage",
       partialize: (state) => ({ 
-        user: state.user
+        user: state.user,
+        selectedProfile: state.selectedProfile
       }),
       onRehydrateStorage: () => (state) => {
         // Sync token from cookie after rehydration
@@ -110,6 +142,8 @@ export const useAuthStore = create<AuthState>()(
           if (token) {
             state.accessToken = token;
           }
+          // Reset session flag on page reload
+          state.profileSelectedInSession = false;
           state.setHydrated(true);
         }
       },

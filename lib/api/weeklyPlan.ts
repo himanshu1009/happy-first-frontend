@@ -1,5 +1,6 @@
-import { date } from 'zod';
+import { DateTime } from 'luxon';
 import api from './axios';
+
 
 export interface WeeklyPlanActivity {
  activity: string;
@@ -48,7 +49,7 @@ export const weeklyPlanAPI = {
   create: (data: CreateWeeklyPlanData) => api.post('/weeklyPlan/create', data),
   
   getCurrent: () => api.get<{ success: boolean; message: string; data: WeeklyPlan }>(
-    '/weeklyPlan/current',{params:{date: new Date().toISOString().split('T')[0]}}
+    '/weeklyPlan/current',{params:{date: DateTime.local().toFormat('yyyy-MM-dd')}}
   ),
   Upcomming: () => api.get<{ success: boolean; message: string; data: WeeklyPlan }>(
     '/weeklyPlan/upcoming'

@@ -34,6 +34,19 @@ export interface VerifyLoginOTPData {
   otp: string;
 }
 
+export interface ChangePasswordData {
+  oldPassword: string;
+  newPassword: string;
+}
+
+export interface AddFamilyMemberData {
+  name: string;
+  relationship: string;
+  age: number;
+  gender: 'male' | 'female' | 'other';
+  level?: 'newbie' | 'bronze' | 'silver' | 'gold' | 'diamond' | 'legend';
+}
+
 export interface UpdateProfileData {
   name?: string;
   email?: string;
@@ -89,6 +102,10 @@ export const authAPI = {
   logout: () => api.post('/userAuth/logout'),
   
   updateProfile: (data: UpdateProfileData) => api.patch('/userAuth/update-profile', data),
+  
+  changePassword: (data: ChangePasswordData) => api.post('/userAuth/change-password', data),
+  
+  addFamilyMember: (data: AddFamilyMemberData) => api.post('/userAuth/add-family-member', data),
   
   sendWelcomeMessage: (phoneNumber: string, countryCode: string) =>
     api.post('/userAuth/send-welcome-message', { phoneNumber, countryCode }),
