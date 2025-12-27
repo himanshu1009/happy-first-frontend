@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { getCookie,useAuthStore } from '../store/authStore';
-const {logout} = useAuthStore.getState();
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
@@ -16,6 +15,11 @@ api.interceptors.request.use(
     const token = getCookie('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    // Get the selected profile from the store on each request
+    const { selectedProfile } = useAuthStore.getState();
+    if(selectedProfile){
+      config.params={...config.params,profile:selectedProfile._id};
     }
     return config;
   },
@@ -54,6 +58,7 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         // Refresh failed, redirect to login
+        const { logout } = useAuthStore.getState();
         logout();
         if (typeof window !== 'undefined') {
           window.location.href = '/login';

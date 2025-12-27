@@ -12,19 +12,20 @@ import MainLayout from '@/components/layout/MainLayout';
 
 export default function AddFamilyMemberPage() {
   const router = useRouter();
-  const { user, setUser } = useAuthStore();
+  const { setProfiles, profiles } = useAuthStore();
   const [formData, setFormData] = useState({
     name: '',
     relationship: '',
     age: '',
     gender: 'other' as 'male' | 'female' | 'other',
+    timezone: 'Asia/Kolkata',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
   const maxMembers = 5;
-  const currentMembers = user?.familyMembers?.length || 0;
+  const currentMembers = profiles?.length || 0;
   const canAddMore = currentMembers < maxMembers;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -63,13 +64,17 @@ export default function AddFamilyMemberPage() {
       setError('Maximum 5 family members allowed');
       return false;
     }
+    if (!formData.timezone.trim()) {
+      setError('Timezone is required');
+      return false;
+    }
 
     return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -84,15 +89,16 @@ export default function AddFamilyMemberPage() {
         age: parseInt(formData.age),
         gender: formData.gender,
         level: 'newbie',
+        timezone: formData.timezone.trim(),
       });
 
       // Update user in store with new family member
       if (response.data.data) {
-        setUser(response.data.data);
+        setProfiles(response.data.data);
       }
 
       setSuccess(true);
-      
+
       // Redirect to profile selection after 1.5 seconds
       setTimeout(() => {
         router.push('/select-profile');
@@ -255,16 +261,172 @@ export default function AddFamilyMemberPage() {
                         type="button"
                         onClick={() => setFormData(prev => ({ ...prev, gender: option.value as any }))}
                         disabled={loading}
-                        className={`py-3 px-4 rounded-lg border-2 transition-all ${
-                          formData.gender === option.value
+                        className={`py-3 px-4 rounded-lg border-2 transition-all ${formData.gender === option.value
                             ? `border-${option.color}-500 bg-${option.color}-50 text-${option.color}-700`
                             : 'border-gray-200 hover:border-gray-300'
-                        }`}
+                          }`}
                       >
                         {option.label}
                       </button>
                     ))}
                   </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Timezone
+                  </label>
+                  <select
+                    value={formData.timezone}
+                    onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <optgroup label="Asia">
+                      <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+                      <option value="Asia/Dubai">Asia/Dubai (GST)</option>
+                      <option value="Asia/Singapore">Asia/Singapore (SGT)</option>
+                      <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
+                      <option value="Asia/Shanghai">Asia/Shanghai (CST)</option>
+                      <option value="Asia/Hong_Kong">Asia/Hong_Kong (HKT)</option>
+                      <option value="Asia/Bangkok">Asia/Bangkok (ICT)</option>
+                      <option value="Asia/Jakarta">Asia/Jakarta (WIB)</option>
+                      <option value="Asia/Seoul">Asia/Seoul (KST)</option>
+                      <option value="Asia/Taipei">Asia/Taipei (CST)</option>
+                      <option value="Asia/Manila">Asia/Manila (PHT)</option>
+                      <option value="Asia/Karachi">Asia/Karachi (PKT)</option>
+                      <option value="Asia/Dhaka">Asia/Dhaka (BST)</option>
+                      <option value="Asia/Colombo">Asia/Colombo (IST)</option>
+                      <option value="Asia/Kathmandu">Asia/Kathmandu (NPT)</option>
+                      <option value="Asia/Kabul">Asia/Kabul (AFT)</option>
+                      <option value="Asia/Tehran">Asia/Tehran (IRST)</option>
+                      <option value="Asia/Baghdad">Asia/Baghdad (AST)</option>
+                      <option value="Asia/Jerusalem">Asia/Jerusalem (IST)</option>
+                      <option value="Asia/Riyadh">Asia/Riyadh (AST)</option>
+                      <option value="Asia/Kuwait">Asia/Kuwait (AST)</option>
+                      <option value="Asia/Bahrain">Asia/Bahrain (AST)</option>
+                      <option value="Asia/Qatar">Asia/Qatar (AST)</option>
+                      <option value="Asia/Muscat">Asia/Muscat (GST)</option>
+                      <option value="Asia/Baku">Asia/Baku (AZT)</option>
+                      <option value="Asia/Yerevan">Asia/Yerevan (AMT)</option>
+                      <option value="Asia/Tbilisi">Asia/Tbilisi (GET)</option>
+                      <option value="Asia/Vladivostok">Asia/Vladivostok (VLAT)</option>
+                      <option value="Asia/Yakutsk">Asia/Yakutsk (YAKT)</option>
+                      <option value="Asia/Irkutsk">Asia/Irkutsk (IRKT)</option>
+                      <option value="Asia/Novosibirsk">Asia/Novosibirsk (NOVT)</option>
+                      <option value="Asia/Omsk">Asia/Omsk (OMST)</option>
+                      <option value="Asia/Yekaterinburg">Asia/Yekaterinburg (YEKT)</option>
+                    </optgroup>
+                    <optgroup label="Europe">
+                      <option value="Europe/London">Europe/London (GMT)</option>
+                      <option value="Europe/Paris">Europe/Paris (CET)</option>
+                      <option value="Europe/Berlin">Europe/Berlin (CET)</option>
+                      <option value="Europe/Rome">Europe/Rome (CET)</option>
+                      <option value="Europe/Madrid">Europe/Madrid (CET)</option>
+                      <option value="Europe/Brussels">Europe/Brussels (CET)</option>
+                      <option value="Europe/Amsterdam">Europe/Amsterdam (CET)</option>
+                      <option value="Europe/Vienna">Europe/Vienna (CET)</option>
+                      <option value="Europe/Prague">Europe/Prague (CET)</option>
+                      <option value="Europe/Warsaw">Europe/Warsaw (CET)</option>
+                      <option value="Europe/Budapest">Europe/Budapest (CET)</option>
+                      <option value="Europe/Athens">Europe/Athens (EET)</option>
+                      <option value="Europe/Helsinki">Europe/Helsinki (EET)</option>
+                      <option value="Europe/Stockholm">Europe/Stockholm (CET)</option>
+                      <option value="Europe/Oslo">Europe/Oslo (CET)</option>
+                      <option value="Europe/Copenhagen">Europe/Copenhagen (CET)</option>
+                      <option value="Europe/Dublin">Europe/Dublin (GMT)</option>
+                      <option value="Europe/Lisbon">Europe/Lisbon (WET)</option>
+                      <option value="Europe/Zurich">Europe/Zurich (CET)</option>
+                      <option value="Europe/Moscow">Europe/Moscow (MSK)</option>
+                      <option value="Europe/Istanbul">Europe/Istanbul (TRT)</option>
+                      <option value="Europe/Bucharest">Europe/Bucharest (EET)</option>
+                      <option value="Europe/Sofia">Europe/Sofia (EET)</option>
+                      <option value="Europe/Belgrade">Europe/Belgrade (CET)</option>
+                      <option value="Europe/Zagreb">Europe/Zagreb (CET)</option>
+                    </optgroup>
+                    <optgroup label="America - North">
+                      <option value="America/New_York">America/New_York (EST)</option>
+                      <option value="America/Chicago">America/Chicago (CST)</option>
+                      <option value="America/Denver">America/Denver (MST)</option>
+                      <option value="America/Los_Angeles">America/Los_Angeles (PST)</option>
+                      <option value="America/Phoenix">America/Phoenix (MST)</option>
+                      <option value="America/Anchorage">America/Anchorage (AKST)</option>
+                      <option value="America/Honolulu">Pacific/Honolulu (HST)</option>
+                      <option value="America/Toronto">America/Toronto (EST)</option>
+                      <option value="America/Vancouver">America/Vancouver (PST)</option>
+                      <option value="America/Montreal">America/Montreal (EST)</option>
+                      <option value="America/Mexico_City">America/Mexico_City (CST)</option>
+                      <option value="America/Cancun">America/Cancun (EST)</option>
+                      <option value="America/Tijuana">America/Tijuana (PST)</option>
+                    </optgroup>
+                    <optgroup label="America - Central & Caribbean">
+                      <option value="America/Guatemala">America/Guatemala (CST)</option>
+                      <option value="America/Belize">America/Belize (CST)</option>
+                      <option value="America/Costa_Rica">America/Costa_Rica (CST)</option>
+                      <option value="America/El_Salvador">America/El_Salvador (CST)</option>
+                      <option value="America/Tegucigalpa">America/Tegucigalpa (CST)</option>
+                      <option value="America/Managua">America/Managua (CST)</option>
+                      <option value="America/Panama">America/Panama (EST)</option>
+                      <option value="America/Havana">America/Havana (CST)</option>
+                      <option value="America/Jamaica">America/Jamaica (EST)</option>
+                      <option value="America/Port-au-Prince">America/Port-au-Prince (EST)</option>
+                      <option value="America/Santo_Domingo">America/Santo_Domingo (AST)</option>
+                      <option value="America/Puerto_Rico">America/Puerto_Rico (AST)</option>
+                      <option value="America/Barbados">America/Barbados (AST)</option>
+                    </optgroup>
+                    <optgroup label="America - South">
+                      <option value="America/Bogota">America/Bogota (COT)</option>
+                      <option value="America/Caracas">America/Caracas (VET)</option>
+                      <option value="America/Lima">America/Lima (PET)</option>
+                      <option value="America/Santiago">America/Santiago (CLT)</option>
+                      <option value="America/Buenos_Aires">America/Buenos_Aires (ART)</option>
+                      <option value="America/Sao_Paulo">America/Sao_Paulo (BRT)</option>
+                      <option value="America/Rio_de_Janeiro">America/Rio_de_Janeiro (BRT)</option>
+                      <option value="America/Montevideo">America/Montevideo (UYT)</option>
+                      <option value="America/Asuncion">America/Asuncion (PYT)</option>
+                      <option value="America/La_Paz">America/La_Paz (BOT)</option>
+                      <option value="America/Guayaquil">America/Guayaquil (ECT)</option>
+                    </optgroup>
+                    <optgroup label="Africa">
+                      <option value="Africa/Cairo">Africa/Cairo (EET)</option>
+                      <option value="Africa/Lagos">Africa/Lagos (WAT)</option>
+                      <option value="Africa/Nairobi">Africa/Nairobi (EAT)</option>
+                      <option value="Africa/Johannesburg">Africa/Johannesburg (SAST)</option>
+                      <option value="Africa/Casablanca">Africa/Casablanca (WET)</option>
+                      <option value="Africa/Algiers">Africa/Algiers (CET)</option>
+                      <option value="Africa/Tunis">Africa/Tunis (CET)</option>
+                      <option value="Africa/Tripoli">Africa/Tripoli (EET)</option>
+                      <option value="Africa/Khartoum">Africa/Khartoum (CAT)</option>
+                      <option value="Africa/Addis_Ababa">Africa/Addis_Ababa (EAT)</option>
+                      <option value="Africa/Dar_es_Salaam">Africa/Dar_es_Salaam (EAT)</option>
+                      <option value="Africa/Kampala">Africa/Kampala (EAT)</option>
+                      <option value="Africa/Lusaka">Africa/Lusaka (CAT)</option>
+                      <option value="Africa/Harare">Africa/Harare (CAT)</option>
+                      <option value="Africa/Maputo">Africa/Maputo (CAT)</option>
+                      <option value="Africa/Accra">Africa/Accra (GMT)</option>
+                      <option value="Africa/Dakar">Africa/Dakar (GMT)</option>
+                      <option value="Africa/Abidjan">Africa/Abidjan (GMT)</option>
+                    </optgroup>
+                    <optgroup label="Australia & Pacific">
+                      <option value="Australia/Sydney">Australia/Sydney (AEDT)</option>
+                      <option value="Australia/Melbourne">Australia/Melbourne (AEDT)</option>
+                      <option value="Australia/Brisbane">Australia/Brisbane (AEST)</option>
+                      <option value="Australia/Perth">Australia/Perth (AWST)</option>
+                      <option value="Australia/Adelaide">Australia/Adelaide (ACDT)</option>
+                      <option value="Australia/Darwin">Australia/Darwin (ACST)</option>
+                      <option value="Pacific/Auckland">Pacific/Auckland (NZDT)</option>
+                      <option value="Pacific/Fiji">Pacific/Fiji (FJT)</option>
+                      <option value="Pacific/Guam">Pacific/Guam (ChST)</option>
+                      <option value="Pacific/Port_Moresby">Pacific/Port_Moresby (PGT)</option>
+                      <option value="Pacific/Tahiti">Pacific/Tahiti (TAHT)</option>
+                      <option value="Pacific/Tongatapu">Pacific/Tongatapu (TOT)</option>
+                      <option value="Pacific/Samoa">Pacific/Samoa (SST)</option>
+                    </optgroup>
+                    <optgroup label="Atlantic">
+                      <option value="Atlantic/Reykjavik">Atlantic/Reykjavik (GMT)</option>
+                      <option value="Atlantic/Azores">Atlantic/Azores (AZOT)</option>
+                      <option value="Atlantic/Cape_Verde">Atlantic/Cape_Verde (CVT)</option>
+                      <option value="Atlantic/Bermuda">Atlantic/Bermuda (AST)</option>
+                    </optgroup>
+                  </select>
                 </div>
 
                 {/* Error Message */}

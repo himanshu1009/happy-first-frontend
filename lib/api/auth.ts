@@ -45,6 +45,7 @@ export interface AddFamilyMemberData {
   age: number;
   gender: 'male' | 'female' | 'other';
   level?: 'newbie' | 'bronze' | 'silver' | 'gold' | 'diamond' | 'legend';
+  timezone: string;
 }
 
 export interface UpdateProfileData {

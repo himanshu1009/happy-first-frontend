@@ -38,7 +38,7 @@ interface WeeklyDataPoint {
 
 export default function HomePage() {
   const router = useRouter();
-  const { user, accessToken, isHydrated, logout } = useAuthStore();
+  const { user, accessToken, isHydrated, logout,selectedProfile } = useAuthStore();
   const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlan | null>(null);
   const [summary, setSummary] = useState<WeeklySummary | null>(null);
   const [dailySummary, setDailySummary] = useState<DailySummary | null>(null);
@@ -105,7 +105,7 @@ export default function HomePage() {
     if (!accessToken || !user) {
       router.push('/login');
       return;
-    }
+    } 
 
     const fetchData = async () => {
       try {
@@ -165,7 +165,7 @@ export default function HomePage() {
       }
     };
     fetchData();
-  }, [accessToken, user, router, isHydrated]);
+  }, [accessToken, user, router, isHydrated,selectedProfile]);
 
   useEffect(() => {
     if (!accessToken || !logDateFilter) return;
@@ -181,7 +181,7 @@ export default function HomePage() {
     };
 
     fetchDayLog();
-  }, [logDateFilter, accessToken]);
+  }, [logDateFilter, accessToken, selectedProfile]);
 
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));

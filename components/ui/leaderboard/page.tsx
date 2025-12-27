@@ -4,10 +4,12 @@ import { useState, useEffect, use } from 'react';
 import { leaderboardAPI, LeaderboardEntry } from '@/lib/api/leaderboard';
 import { activityAPI, Activity } from '@/lib/api/activity';
 import { authAPI } from '@/lib/api/auth';
+import { useAuthStore } from '@/lib/store/authStore';
 
 type LeaderboardType = 'daily' | 'weekly';
 
 export default function LeaderboardPage() {
+  const { selectedProfile } = useAuthStore();
   const [activeTab, setActiveTab] = useState<LeaderboardType>('weekly');
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,18 +20,8 @@ export default function LeaderboardPage() {
   const [userRank, setUserRank] = useState<LeaderboardEntry|null>(null);
   
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await authAPI.userInfo();  
-        setUserId(response.data.data._id);
 
-      } catch (err) {
-        console.error('Error fetching user:', err);
-      }
-    };
-    fetchUser();
-  }, []);
+    
   useEffect(() => {
     
     fetchActivity();
@@ -64,7 +56,7 @@ export default function LeaderboardPage() {
       if (response.data?.data) {
         setLeaderboardData(response.data.data);
         if(response.data.data){
-          const rank = response.data.data.find(entry => entry.user._id === userId) || null;
+          const rank = response.data.data.find(entry => entry.user._id === selectedProfile?._id) || null;
           setUserRank(rank);
         }
       }

@@ -1,5 +1,9 @@
 import { DateTime } from 'luxon';
 import api from './axios';
+import { useAuthStore } from '@/lib/store/authStore';
+ const { profiles } = useAuthStore.getState();
+
+
 
 
 export interface WeeklyPlanActivity {
@@ -44,6 +48,7 @@ export interface CreateWeeklyPlanData {
 }
 
 export const weeklyPlanAPI = {
+ 
   getOptions: () => api.get('/weeklyPlan/options'),
   
   create: (data: CreateWeeklyPlanData) => api.post('/weeklyPlan/create', data),
@@ -55,5 +60,5 @@ export const weeklyPlanAPI = {
     '/weeklyPlan/upcoming'
   ),
 
-  firstSetup: (activities:CreateWeeklyPlanData) => api.post('/weeklyPlan/firstTimeSetup', activities),
+  firstSetup: (activities:CreateWeeklyPlanData) => api.post('/weeklyPlan/firstTimeSetup', activities, {params: {profile: profiles?.[0]?._id}}),
 };

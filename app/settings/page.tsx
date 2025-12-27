@@ -10,7 +10,7 @@ import { authAPI } from '@/lib/api/auth';
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { user, accessToken, logout } = useAuthStore();
+  const { user, accessToken, logout, profiles,selectedProfile } = useAuthStore();
   const [userData, setUserData] = useState<typeof user | null>(null);
 
   const handleLogout = () => {
@@ -24,6 +24,7 @@ export default function SettingsPage() {
       try {
         const userInfo = await authAPI.userInfo();
         setUserData(userInfo.data.data);
+
       } catch (error) {
         console.error('Failed to fetch user info:', error);
       }
@@ -31,7 +32,7 @@ export default function SettingsPage() {
     fetchUserData();
   }, [accessToken]);
 
-  const hasFamilyMembers = user?.familyMembers && user.familyMembers.length > 0;
+  const hasFamilyMembers = profiles&& profiles.length > 1;
   
   
 
@@ -126,30 +127,30 @@ export default function SettingsPage() {
           <Card className="p-6 mb-6">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-2xl">
-                {user?.name?.charAt(0) || 'U'}
+                {userData?.name?.charAt(0) || 'U'}
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-lg text-gray-900">{user?.name}</h3>
-                <p className="text-sm text-gray-600">{user?.phoneNumber}</p>
-                <p className="text-xs text-gray-500">{user?.email}</p>
+                <h3 className="font-bold text-lg text-gray-900">{selectedProfile?.name}</h3>
+                <p className="text-sm text-gray-600">{userData?.phoneNumber}</p>
+                <p className="text-xs text-gray-500">{userData?.email}</p>
               </div>
             </div>
           </Card>
 
           {/* Profile Completion Banner */}
-          {userData && (() => {
+          {selectedProfile && (() => {
             // Calculate profile completion percentage
             const profileFields = [
-              userData.profile?.profession,
-              userData.profile?.challenges,
-              userData.profile?.goals,
-              userData.profile?.likes,
-              userData.profile?.personalCare,
-              userData.profile?.dislikes,
-              userData.profile?.medicalConditions,
-              userData.profile?.health,
-              userData.profile?.family,
-              userData.profile?.schedule,
+              selectedProfile.profile?.profession,
+              selectedProfile.profile?.challenges,
+              selectedProfile.profile?.goals,
+              selectedProfile.profile?.likes,
+              selectedProfile.profile?.personalCare,
+              selectedProfile.profile?.dislikes,
+              selectedProfile.profile?.medicalConditions,
+              selectedProfile.profile?.health,
+              selectedProfile.profile?.family,
+              selectedProfile.profile?.schedule,
             ];
             const completedFields = profileFields.filter(field => field !== null && field !== undefined && field !== '').length;
             const completionPercentage = Math.round((completedFields / profileFields.length) * 100);

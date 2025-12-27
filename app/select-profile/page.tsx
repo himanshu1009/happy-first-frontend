@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/lib/store/authStore';
+import { useAuthStore,Profile } from '@/lib/store/authStore';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { User, UserPlus, Heart, Users } from 'lucide-react';
 
+
 export default function SelectProfilePage() {
   const router = useRouter();
-  const { user, setSelectedProfile, needsProfileSelection, isHydrated } = useAuthStore();
+  const { user, profiles, setSelectedProfile, needsProfileSelection, isHydrated } = useAuthStore();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -21,46 +22,21 @@ export default function SelectProfilePage() {
       router.push('/login');
       return;
     }
-
-    // If no family members, select the user as profile and continue
-    if (!user.familyMembers || user.familyMembers.length === 0) {
-      const mainProfile = {
-        name: user.name || 'Me',
-        relationship: 'self',
-        age: 0,
-        gender: 'other' as const,
-        level: user.level,
-      };
-      setSelectedProfile(mainProfile);
+    if (profiles?.length === 1) {
+      setSelectedProfile(profiles?.[0] || null);
       router.push('/home');
       return;
     }
-
-    // If already selected in this session, redirect
-    if (!needsProfileSelection()) {
-      router.push('/home');
-    }
   }, [user, isHydrated, needsProfileSelection, router, setSelectedProfile]);
 
-  const handleSelectProfile = (profile: any) => {
+  const handleSelectProfile = (profile: Profile ) => {
     setLoading(true);
     setSelectedProfile(profile);
-    
+
     // Small delay for better UX
     setTimeout(() => {
       router.push('/home');
     }, 300);
-  };
-
-  const handleSelectMainProfile = () => {
-    const mainProfile = {
-      name: user?.name || 'Me',
-      relationship: 'self',
-      age: 0,
-      gender: 'other' as const,
-      level: user?.level,
-    };
-    handleSelectProfile(mainProfile);
   };
 
   const getRelationshipIcon = (relationship: string) => {
@@ -117,7 +93,7 @@ export default function SelectProfilePage() {
     );
   }
 
-  const familyMembers = user.familyMembers || [];
+  const familyMembers = profiles || [];
   const canAddMore = familyMembers.length < 5;
 
   return (
@@ -132,37 +108,7 @@ export default function SelectProfilePage() {
         </div>
 
         {/* Main User Profile Card */}
-        <Card className="mb-6 hover:shadow-lg transition-all duration-300 cursor-pointer group"
-          onClick={handleSelectMainProfile}
-        >
-          <div className="p-6 flex items-center space-x-4">
-            <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${getGenderColor('other')} flex items-center justify-center text-white group-hover:scale-110 transition-transform`}>
-              <User className="w-8 h-8" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <h3 className="text-xl font-bold text-gray-900">{user.name || 'Me'}</h3>
-                {user.level && (
-                  <span className={`text-xs px-2 py-1 rounded-full text-white ${getLevelBadgeColor(user.level)}`}>
-                    {user.level.toUpperCase()}
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-gray-600">Main Profile</p>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-sm text-purple-600 font-medium">
-                  🏆 {user.HappyPoints || 0} Happy Points
-                </span>
-              </div>
-            </div>
-            <div className="text-blue-600 group-hover:translate-x-1 transition-transform">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-          </div>
-        </Card>
-
+       
         {/* Family Members Section */}
         {familyMembers.length > 0 && (
           <>
@@ -173,7 +119,7 @@ export default function SelectProfilePage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               {familyMembers.map((member, index) => (
-                <Card 
+                <Card
                   key={index}
                   className="hover:shadow-lg transition-all duration-300 cursor-pointer group"
                   onClick={() => handleSelectProfile(member)}

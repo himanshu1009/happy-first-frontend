@@ -104,7 +104,7 @@ export default function TasksPage() {
         // After 6 PM, show time until 6 AM next day (when logs reset)
         const next6AM = new Date();
         next6AM.setDate(next6AM.getDate() + 1);
-        next6AM.setHours(6, 0, 0, 0);
+        next6AM.setHours(18, 0, 0, 0);
         
         const diff = next6AM.getTime() - now.getTime();
         const hours = Math.floor(diff / (1000 * 60 * 60));

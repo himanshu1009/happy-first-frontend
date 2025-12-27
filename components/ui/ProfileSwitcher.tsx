@@ -7,9 +7,9 @@ import { RefreshCw } from 'lucide-react';
 
 export function ProfileSwitcher() {
   const router = useRouter();
-  const { user, needsProfileSelection, setProfileSelectedInSession } = useAuthStore();
+  const { user, needsProfileSelection, setProfileSelectedInSession,profiles } = useAuthStore();
 
-  if (!user || !user.familyMembers || user.familyMembers.length === 0) {
+  if (profiles?.length === 0) {
     return null;
   }
 
