@@ -165,36 +165,39 @@ function RegisterForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                City (Optional)
+                City *
               </label>
               <Input
                 type="text"
                 placeholder="Mumbai"
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                required
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Location Pin (Optional)
+                Location Pin *
               </label>
               <Input
                 type="text"
                 placeholder="400001"
                 value={formData.locationPin}
                 onChange={(e) => setFormData({ ...formData, locationPin: e.target.value })}
+                required
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Date of Birth (Optional)
+                Date of Birth *
               </label>
               <Input
                 type="date"
                 value={formData.dateOfBirth}
                 onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                required
               />
             </div>
 
