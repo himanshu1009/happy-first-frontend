@@ -81,7 +81,7 @@ export default function CreatePlanPage() {
       setCurrentDay(dayNames[dayOfWeek]);
       
       // Unlock on Friday (5), Saturday (6), Sunday (0)
-      const unlocked = dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 4;
+      const unlocked = dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0;
       setIsUnlocked(unlocked);
 
       if (unlocked) {
