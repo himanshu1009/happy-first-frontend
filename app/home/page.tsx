@@ -440,14 +440,26 @@ function HomePageContent() {
                               const today = new Date();
                               const remainingDays = Math.max(0, Math.ceil((weekEnd.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
                               const remaining = activity.targetValue * remainingDays - ((activity.TodayLogged) ? (activity.targetValue) : (0));
+                              const isSurprise = activity?.isSurpriseActivity|| false;
 
                               return (
-                                <div key={index} className={`${activity.TodayLogged ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'} rounded-lg p-4`}>
+                                <div key={index} className={`${
+                                  isSurprise 
+                                    ? (activity.TodayLogged ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-400 shadow-md' : 'bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-400 shadow-md')
+                                    : (activity.TodayLogged ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200')
+                                } rounded-lg p-4 relative`}>
+                                  {isSurprise && (
+                                    <div className="absolute -top-2 -right-2 bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center gap-1 animate-pulse">
+                                      🎁 SURPRISE
+                                    </div>
+                                  )}
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
-                                      <span className="text-2xl">{activity.TodayLogged ? '✅' : '⏳'}</span>
+                                      <span className="text-2xl">{isSurprise ? (activity.TodayLogged ? '🎉' : '🎁') : (activity.TodayLogged ? '✅' : '⏳')}</span>
                                       <div>
-                                        <p className="font-medium text-sm text-gray-900">{activityData?.label || 'Activity'}</p>
+                                        <p className={`font-medium text-sm ${isSurprise ? 'text-orange-900 font-semibold' : 'text-gray-900'}`}>
+                                          {activityData?.label || 'Activity'}
+                                        </p>
                                         <p className="text-xs text-gray-600">
                                           Daily • {activityData?.unit}
                                         </p>
@@ -455,11 +467,11 @@ function HomePageContent() {
                                     </div>
                                     <div className="text-right">
                                       {activity.TodayLogged ? (
-                                        <p className="text-sm font-semibold text-green-600">
-                                          Done Today!
+                                        <p className={`text-sm font-semibold ${isSurprise ? 'text-orange-600' : 'text-green-600'}`}>
+                                          {isSurprise ? '🌟 Done Today!' : 'Done Today!'}
                                         </p>
                                       ) : (
-                                        <p className="text-sm font-semibold text-blue-600">
+                                        <p className={`text-sm font-semibold ${isSurprise ? 'text-orange-600' : 'text-blue-600'}`}>
                                           {activity.targetValue} {activityData?.unit}/day
                                         </p>
                                       )}
@@ -485,22 +497,34 @@ function HomePageContent() {
                               const today = new Date();
                               const remainingDays = Math.max(0, Math.ceil((weekEnd.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
                               const remaining = activity.targetValue - (activity.achievedUnits || 0);
+                              const isSurprise = activity?.isSurpriseActivity || false;
 
                               return (
-                                <div key={index} className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                                <div key={index} className={`${
+                                  isSurprise 
+                                    ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-400 shadow-md'
+                                    : 'bg-orange-50 border border-orange-200'
+                                } rounded-lg p-4 relative`}>
+                                  {isSurprise && (
+                                    <div className="absolute -top-2 -right-2 bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center gap-1 animate-pulse">
+                                      🎁 SURPRISE
+                                    </div>
+                                  )}
                                   <div className="flex items-center justify-between mb-3">
                                     <div className="flex items-center gap-2">
-                                      <span className="text-2xl">⏳</span>
+                                      <span className="text-2xl">{isSurprise ? '🎁' : '⏳'}</span>
                                       <div>
-                                        <p className="font-medium text-sm text-gray-900">{activityData?.label || 'Activity'}</p>
+                                        <p className={`font-medium text-sm ${isSurprise ? 'text-orange-900 font-semibold' : 'text-gray-900'}`}>
+                                          {activityData?.label || 'Activity'}
+                                        </p>
                                         <p className="text-xs text-gray-600">
                                           Weekly • {activityData?.unit}
                                         </p>
                                       </div>
                                     </div>
                                     <div className="text-right">
-                                      <p className="text-sm font-semibold text-orange-600">
-                                        {remaining} {activityData?.unit} left
+                                      <p className={`text-sm font-semibold ${isSurprise ? 'text-orange-700' : 'text-orange-600'}`}>
+                                        {isSurprise && '🌟 '}{remaining} {activityData?.unit} left
                                       </p>
                                       <p className="text-xs text-gray-500">
                                         {remainingDays} Day{remainingDays !== 1 ? 's' : ''} remaining
@@ -931,73 +955,6 @@ function HomePageContent() {
                 <p className="text-gray-500 text-sm">Complete Your Tasks to see monthly chart</p>
               </div>
             </CardContent>))}
-          </Card>
-
-          {/* Activity Goals */}
-          <Card className="activity-goals">
-            <button
-              onClick={() => toggleSection('activityGoals')}
-              className="w-full p-4 flex items-center justify-between"
-            >
-              <span className="font-semibold text-gray-900">Today`s Activity Goals</span>
-              {expandedSections.activityGoals ? (
-                <ChevronUp className="w-5 h-5 text-gray-500" />
-              ) : (
-                <ChevronDown className="w-5 h-5 text-gray-500" />
-              )}
-            </button>
-            {expandedSections.activityGoals && (
-              <CardContent className="px-4 pb-4 space-y-3">
-                {noPlanError ? (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
-                    <div className="text-3xl mb-2">📅</div>
-                    <h3 className="font-semibold text-yellow-900 text-sm mb-1">No Active Weekly Plan</h3>
-                    <p className="text-xs text-yellow-700 mb-3">{noPlanError}</p>
-
-                  </div>
-                ) : weeklyPlan ? (
-                  weeklyPlan.activities.map((activity, index) => {
-                    const activityData = typeof activity === 'object'
-                      ? activity
-                      : null;
-                    const progressPercentage = Math.min(
-                      Math.round(((activity.achieved || 0) / activity.targetValue) * 100),
-                      100
-                    );
-
-                    return (
-                      <div key={index} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-2xl">🏃</span>
-                            <div>
-                              <p className="font-medium text-sm">{activityData?.label || 'Activity'}</p>
-                              <p className="text-xs text-gray-600">
-                                {activity.targetValue} {activityData?.unit} ({activity.cadence === 'daily' ? 'Daily' : 'Weekly'})
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-2xl font-bold text-green-600">
-                              + {activity.achieved || 0} <span className="text-sm font-normal text-gray-500">{activityData?.unit}</span>
-                            </p>
-
-                          </div>
-                        </div>
-                        {/* <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-to-r from-green-500 to-green-600 rounded-full transition-all duration-300"
-                            style={{ width: `${progressPercentage}%` }}
-                          ></div>
-                        </div> */}
-                      </div>
-                    );
-                  })
-                ) : (
-                  <p className="text-sm text-gray-500 text-center py-4">Loading activities...</p>
-                )}
-              </CardContent>
-            )}
           </Card>
 
           {/* Leaderboard */}

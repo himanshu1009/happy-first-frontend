@@ -81,7 +81,7 @@ export default function CreatePlanPage() {
       setCurrentDay(dayNames[dayOfWeek]);
       
       // Unlock on Friday (5), Saturday (6), Sunday (0)
-      const unlocked = dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0;
+      const unlocked = dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0|| dayOfWeek === 1;
       setIsUnlocked(unlocked);
 
       if (unlocked) {
@@ -95,7 +95,7 @@ export default function CreatePlanPage() {
   const fetchActivities = async () => {
     try {
       const response = await weeklyPlanAPI.getOptions();
-      setActivities(response.data.data);
+      setActivities(response.data.data.activities);
       setTiers(response.data.data.tier);
     } catch (error) {
       console.error('Failed to fetch activities:', error);
@@ -118,6 +118,7 @@ export default function CreatePlanPage() {
           baseUnit: activity.baseUnit,
           values:activity.values,
           allowedCadence: activity.allowedCadence,
+
         },
       ]);
     }

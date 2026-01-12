@@ -19,6 +19,7 @@ export interface WeeklyPlanActivity {
   pointsPerUnit?: number;
   unit: string;
   TodayLogged:boolean;
+  isSurpriseActivity?:boolean;
   values:[
     {
       tier:number;
@@ -53,8 +54,8 @@ export const weeklyPlanAPI = {
   
   create: (data: CreateWeeklyPlanData) => api.post('/weeklyPlan/create', data),
   
-  getCurrent: () => api.get<{ success: boolean; message: string; data: WeeklyPlan }>(
-    '/weeklyPlan/current',{params:{date: DateTime.local().toFormat('yyyy-MM-dd')}}
+  getCurrent: (date? : string) => api.get<{ success: boolean; message: string; data: WeeklyPlan }>(
+    '/weeklyPlan/current',{params:{date: date ?? DateTime.local().toFormat('yyyy-MM-dd')}}
   ),
   Upcomming: () => api.get<{ success: boolean; message: string; data: WeeklyPlan }>(
     '/weeklyPlan/upcoming'

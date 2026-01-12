@@ -390,26 +390,43 @@ export default function TasksPage() {
                 ? activity 
                 : null;
               const activityId = activityData?.activity || '';
+              const isSurprise = activity?.isSurpriseActivity ||false;
               
               return (
-                <Card key={activityId}>
+                <Card key={activityId} className={`${
+                  isSurprise 
+                    ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-400 shadow-md relative'
+                    : ''
+                }`}>
+                  {isSurprise && (
+                    <div className="absolute -top-2 -right-2 bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center gap-1 animate-pulse z-10">
+                      🎁 SURPRISE
+                    </div>
+                  )}
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <span className="text-xl">
-                          {activityData?.label === 'Steps' && '👣'}
-                          {activityData?.label === 'Sleep' && '😴'}
-                          {activityData?.label === 'Water' && '💧'}
-                          {activityData?.label === 'Yoga' && '🧘'}
-                          {activityData?.label === 'Gym' && '🏋️'}
-                          {activityData?.label === 'Floors' && '🏢'}
-                          {!['Steps', 'Sleep', 'Water', 'Yoga', 'Gym', 'Floors'].includes(activityData?.label || '') && '✅'}
+                          {isSurprise ? '🎁' : (
+                            <>
+                              {activityData?.label === 'Steps' && '👣'}
+                              {activityData?.label === 'Sleep' && '😴'}
+                              {activityData?.label === 'Water' && '💧'}
+                              {activityData?.label === 'Yoga' && '🧘'}
+                              {activityData?.label === 'Gym' && '🏋️'}
+                              {activityData?.label === 'Floors' && '🏢'}
+                              {!['Steps', 'Sleep', 'Water', 'Yoga', 'Gym', 'Floors'].includes(activityData?.label || '') && '✅'}
+                            </>
+                          )}
                         </span>
                         <div>
-                          <p className="font-medium text-sm">{activityData?.label}</p>
-                          <p className="text-xs text-gray-600">
+                          <p className={`font-medium text-sm ${isSurprise ? 'text-orange-900 font-semibold' : ''}`}>
+                            {isSurprise && '⭐ '}{activityData?.label}
+                          </p>
+                          <p className={`text-xs ${isSurprise ? 'text-orange-700 font-medium' : 'text-gray-600'}`}>
                             Target: {activity.targetValue} {activityData?.unit}
                             {activity.cadence === 'daily' ? '/day' : '/week'}
+                            {isSurprise && ' 🎉'}
                           </p>
                         </div>
                       </div>
@@ -447,8 +464,8 @@ export default function TasksPage() {
                                   placeholder="Available after 6 PM"
                                   className="flex-1 bg-orange-50 border-orange-200 cursor-not-allowed opacity-60 placeholder:text-orange-700"
                                 />
-                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                  <Lock className="w-5 h-5 text-orange-500" />
+                                <div className="absolute inset-0 flex items-center justify-end pointer-events-none">
+                                  <Lock className="w-4 h-4 mr-3 text-orange-500" />
                                 </div>
                               </div>
                               <div className="flex items-center gap-1 text-xs text-orange-600 min-w-20">
