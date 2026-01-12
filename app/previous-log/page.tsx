@@ -133,7 +133,7 @@ export default function PreviousLogPage() {
                 setCheckingLog(false);
 
                 // Fetch weekly plan
-                const response = await weeklyPlanAPI.getCurrent();
+                const response = await weeklyPlanAPI.getCurrent(selectedDate);
 
                 if (response.data.data) {
                     const plan = response.data.data;
@@ -339,7 +339,7 @@ export default function PreviousLogPage() {
                                                     </p>
                                                 </div>
                                                 <div className="text-sm font-medium text-purple-600">
-                                                    {activity.pointsAllocated} pts
+                                                    {activity.pointsAllocated?.toFixed(2)} pts
                                                 </div>
                                             </div>
 

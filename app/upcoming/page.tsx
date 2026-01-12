@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar, ArrowLeft, TrendingUp, Target, Clock } from 'lucide-react';
 import type { WeeklyPlan } from '@/lib/api/weeklyPlan';
 
+
 export default function UpcomingPage() {
   const router = useRouter();
   const { accessToken, user, isHydrated } = useAuthStore();
@@ -213,35 +214,46 @@ export default function UpcomingPage() {
                   .map((activity) => {
                     const activityData = typeof activity === 'object' ? activity : null;
                     const activityId = activityData?.activity || '';
+                    const isSurprise = activity?.isSurpriseActivity || false;
                     
                     return (
-                      <Card key={activityId} className="bg-white hover:shadow-md transition-shadow">
+                      <Card key={activityId} className={`${
+                        isSurprise 
+                          ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-400 shadow-md relative'
+                          : 'bg-white'
+                      } hover:shadow-md transition-shadow`}>
+                        {isSurprise && (
+                          <div className="absolute -top-2 -right-2 bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center gap-1 animate-pulse z-10">
+                            🎁 SURPRISE
+                          </div>
+                        )}
                         <CardContent className="p-4">
                           <div className="flex items-start justify-between">
                             <div className="flex items-start gap-3 flex-1">
                               <span className="text-2xl mt-1">
-                                {getActivityIcon(activityData?.label || '')}
+                                {isSurprise ? '🎁' : getActivityIcon(activityData?.label || '')}
                               </span>
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <h4 className="font-semibold text-gray-900">
-                                    {activityData?.label}
+                                  <h4 className={`font-semibold ${isSurprise ? 'text-orange-900' : 'text-gray-900'}`}>
+                                    {isSurprise && '⭐ '}{activityData?.label}
                                   </h4>
                                 </div>
-                                <p className="text-sm text-gray-600 mb-2">
-                                  Target: <span className="font-medium text-gray-900">
+                                <p className={`text-sm mb-2 ${isSurprise ? 'text-orange-700' : 'text-gray-600'}`}>
+                                  Target: <span className={`font-medium ${isSurprise ? 'text-orange-900' : 'text-gray-900'}`}>
                                     {activity.targetValue} {activityData?.unit}/day
                                   </span>
+                                  {isSurprise && ' 🎉'}
                                 </p>
-                                <div className="flex items-center gap-4 text-xs text-gray-500">
+                                <div className={`flex items-center gap-4 text-xs ${isSurprise ? 'text-orange-600' : 'text-gray-500'}`}>
                                   <span className="flex items-center gap-1">
-                                    <span className="font-medium text-blue-600">
+                                    <span className={`font-medium ${isSurprise ? 'text-orange-700' : 'text-blue-600'}`}>
                                       {activity.pointsPerUnit?.toFixed(2)}
                                     </span>
                                     pts/day
                                   </span>
                                   <span className="flex items-center gap-1">
-                                    Max: <span className="font-medium text-green-600">
+                                    Max: <span className={`font-medium ${isSurprise ? 'text-orange-700' : 'text-green-600'}`}>
                                       {((activity.pointsPerUnit || 0)  * 7).toFixed(0)}
                                     </span>
                                     pts/week
@@ -268,35 +280,46 @@ export default function UpcomingPage() {
                     .map((activity) => {
                       const activityData = typeof activity === 'object' ? activity : null;
                       const activityId = activityData?.activity || '';
+                      const isSurprise = activity?.isSurpriseActivity|| false;
                       
                       return (
-                        <Card key={activityId} className="bg-white hover:shadow-md transition-shadow">
+                        <Card key={activityId} className={`${
+                          isSurprise 
+                            ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-400 shadow-md relative'
+                            : 'bg-white'
+                        } hover:shadow-md transition-shadow`}>
+                          {isSurprise && (
+                            <div className="absolute -top-2 -right-2 bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center gap-1 animate-pulse z-10">
+                              🎁 SURPRISE
+                            </div>
+                          )}
                           <CardContent className="p-4">
                             <div className="flex items-start justify-between">
                               <div className="flex items-start gap-3 flex-1">
                                 <span className="text-2xl mt-1">
-                                  {getActivityIcon(activityData?.label || '')}
+                                  {isSurprise ? '🎁' : getActivityIcon(activityData?.label || '')}
                                 </span>
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2 mb-1">
-                                    <h4 className="font-semibold text-gray-900">
-                                      {activityData?.label}
+                                    <h4 className={`font-semibold ${isSurprise ? 'text-orange-900' : 'text-gray-900'}`}>
+                                      {isSurprise && '⭐ '}{activityData?.label}
                                     </h4>
                                   </div>
-                                  <p className="text-sm text-gray-600 mb-2">
-                                    Target: <span className="font-medium text-gray-900">
+                                  <p className={`text-sm mb-2 ${isSurprise ? 'text-orange-700' : 'text-gray-600'}`}>
+                                    Target: <span className={`font-medium ${isSurprise ? 'text-orange-900' : 'text-gray-900'}`}>
                                       {activity.targetValue} {activityData?.unit}/week
                                     </span>
+                                    {isSurprise && ' 🎉'}
                                   </p>
-                                  <div className="flex items-center gap-4 text-xs text-gray-500">
+                                  <div className={`flex items-center gap-4 text-xs ${isSurprise ? 'text-orange-600' : 'text-gray-500'}`}>
                                     <span className="flex items-center gap-1">
-                                      <span className="font-medium text-blue-600">
+                                      <span className={`font-medium ${isSurprise ? 'text-orange-700' : 'text-blue-600'}`}>
                                         {activity.pointsPerUnit?.toFixed(2)}
                                       </span>
                                       pts/{activityData?.unit}
                                     </span>
                                     <span className="flex items-center gap-1">
-                                      Max: <span className="font-medium text-green-600">
+                                      Max: <span className={`font-medium ${isSurprise ? 'text-orange-700' : 'text-green-600'}`}>
                                         {((activity.pointsPerUnit || 0) * activity.targetValue).toFixed(0)}
                                       </span>
                                       pts/week
