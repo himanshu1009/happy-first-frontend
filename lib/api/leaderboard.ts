@@ -1,12 +1,13 @@
 import api from './axios';
 
 export interface LeaderboardEntry {
-  rank: number;
+  ranks:{rank: number;
   value: number;
   user: {
     _id: string;
     name: string;
-  };
+  };},
+  totalLeaders: number;
 }
 
 export const leaderboardAPI = {
