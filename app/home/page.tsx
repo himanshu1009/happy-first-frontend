@@ -687,8 +687,8 @@ function HomePageContent() {
                     <div className="text-right">
                       <div className="text-lg font-bold text-indigo-600">
                         {viewMode === 'week'
-                          ? weeklyData.reduce((sum, w) => sum + w.totalPoints, 0).toFixed(1)
-                          : monthlyData.reduce((sum, d) => sum + d.points, 0).toFixed(1)
+                          ? weeklyData.slice(0, -1).reduce((sum, w) => sum + w.totalPoints, 0).toFixed(1)
+                          : monthlyData.slice(0, -1).reduce((sum, d) => sum + d.points, 0).toFixed(1)
                         }
                       </div>
                       <div className="text-xs text-gray-600">Total Points</div>
@@ -700,13 +700,13 @@ function HomePageContent() {
                 {viewMode === 'week' ? (
                   /* Weekly View */
                   <div className="relative h-48 flex items-end gap-2 pb-10">
-                    {weeklyData.map((week, index) => {
-                      const maxPoints = Math.max(...weeklyData.map(w => w.totalPoints));
+                    {weeklyData.slice(0, -1).map((week, index) => {
+                      const filteredWeeklyData = weeklyData.slice(0, -1);
+                      const maxPoints = Math.max(...filteredWeeklyData.map(w => w.totalPoints));
                       const heightPercentage = (week.totalPoints / maxPoints) * 100;
-                      const isCurrentWeek = index === weeklyData.length - 1;
 
                       // Calculate activity trend line position
-                      const maxActivities = Math.max(...weeklyData.map(w => w.avgActivities));
+                      const maxActivities = Math.max(...filteredWeeklyData.map(w => w.avgActivities));
                       const activityHeightPercentage = (week.avgActivities / maxActivities) * 100;
 
                       return (
@@ -723,10 +723,7 @@ function HomePageContent() {
                           <div className="w-full relative group flex items-end" style={{ height: '100%' }}>
                             <div
                               onClick={() => router.push(`/week-analysis?weekStart=${week.weekStartISO}`)}
-                              className={`w-full rounded-t-lg transition-all duration-300 ${isCurrentWeek
-                                  ? 'bg-gradient-to-t from-indigo-600 to-indigo-500 opacity-95 shadow-lg'
-                                  : 'bg-gradient-to-t from-indigo-500 to-indigo-400 opacity-75'
-                                } hover:opacity-100 cursor-pointer hover:shadow-xl`}
+                              className={`w-full rounded-t-lg transition-all duration-300 bg-gradient-to-t from-indigo-500 to-indigo-400 opacity-75 hover:opacity-100 cursor-pointer hover:shadow-xl`}
                               style={{ height: `${Math.max(heightPercentage, 8)}%` }}
                             >
                               {/* Tooltip */}
@@ -762,10 +759,11 @@ function HomePageContent() {
                     <svg className="absolute inset-0 pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ height: 'calc(100% - 40px)', width: '100%' }}>
                       {/* Line */}
                       <polyline
-                        points={weeklyData.map((week, index) => {
-                          const maxActivities = Math.max(...weeklyData.map(w => w.avgActivities));
+                        points={weeklyData.slice(0, -1).map((week, index) => {
+                          const filteredWeeklyData = weeklyData.slice(0, -1);
+                          const maxActivities = Math.max(...filteredWeeklyData.map(w => w.avgActivities));
                           const activityHeightPercentage = (week.avgActivities / maxActivities) * 100;
-                          const totalBars = weeklyData.length;
+                          const totalBars = filteredWeeklyData.length;
                           const barWidth = 100 / totalBars;
                           const x = (index * barWidth) + (barWidth / 2);
                           const y = 100 - activityHeightPercentage;
@@ -783,14 +781,14 @@ function HomePageContent() {
                 ) : (
                   /* Daily View */
                   <div className="relative h-48 flex items-end gap-0.5 pb-8">
-                    {monthlyData.map((dataPoint, index) => {
-                      const maxPoints = Math.max(...monthlyData.map(d => d.points));
+                    {monthlyData.slice(0, -1).map((dataPoint, index) => {
+                      const filteredMonthlyData = monthlyData.slice(0, -1);
+                      const maxPoints = Math.max(...filteredMonthlyData.map(d => d.points));
                       const heightPercentage = (dataPoint.points / maxPoints) * 100;
-                      const isToday = index === monthlyData.length - 1;
                       const isWeekend = new Date(dataPoint.date).getDay() % 6 === 0;
 
                       // Calculate activity trend line position
-                      const maxActivities = Math.max(...monthlyData.map(d => d.activitiesCount));
+                      const maxActivities = Math.max(...filteredMonthlyData.map(d => d.activitiesCount));
                       const activityHeightPercentage = (dataPoint.activitiesCount / maxActivities) * 100;
 
                       return (
@@ -807,11 +805,9 @@ function HomePageContent() {
                           <div className="w-full relative group flex items-end" style={{ height: '100%' }}>
                             <div
                               onClick={() => handleBarClick(dataPoint.date)}
-                              className={`w-full rounded-t-sm transition-all duration-300 ${isToday
-                                  ? 'bg-indigo-500 opacity-90'
-                                  : isWeekend
-                                    ? 'bg-indigo-400 opacity-80'
-                                    : 'bg-indigo-400 opacity-70'
+                              className={`w-full rounded-t-sm transition-all duration-300 ${isWeekend
+                                  ? 'bg-indigo-400 opacity-80'
+                                  : 'bg-indigo-400 opacity-70'
                                 } hover:opacity-100 hover:scale-105 cursor-pointer`}
                               style={{ height: `${Math.max(heightPercentage, 5)}%` }}
                             >
@@ -843,10 +839,11 @@ function HomePageContent() {
                     <svg className="absolute inset-0 pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ height: 'calc(100% - 32px)', width: '100%' }}>
                       {/* Line */}
                       <polyline
-                        points={monthlyData.map((dataPoint, index) => {
-                          const maxActivities = Math.max(...monthlyData.map(d => d.activitiesCount));
+                        points={monthlyData.slice(0, -1).map((dataPoint, index) => {
+                          const filteredMonthlyData = monthlyData.slice(0, -1);
+                          const maxActivities = Math.max(...filteredMonthlyData.map(d => d.activitiesCount));
                           const activityHeightPercentage = (dataPoint.activitiesCount / maxActivities) * 100;
-                          const totalBars = monthlyData.length;
+                          const totalBars = filteredMonthlyData.length;
                           const barWidth = 100 / totalBars;
                           const x = (index * barWidth) + (barWidth / 2);
                           const y = 100 - activityHeightPercentage;
@@ -908,19 +905,19 @@ function HomePageContent() {
                     <>
                       <div className="text-center">
                         <div className="text-lg font-bold text-gray-900">
-                          {weeklyData.length > 0 ? (weeklyData.reduce((sum, w) => sum + w.totalPoints, 0) / weeklyData.length).toFixed(1) : 0}
+                          {weeklyData.length > 1 ? (weeklyData.slice(0, -1).reduce((sum, w) => sum + w.totalPoints, 0) / (weeklyData.length - 1)).toFixed(1) : 0}
                         </div>
                         <div className="text-xs text-gray-600">Weekly Avg</div>
                       </div>
                       <div className="text-center">
                         <div className="text-lg font-bold text-green-600">
-                          {weeklyData.length > 0 ? Math.max(...weeklyData.map(w => w.totalPoints)).toFixed(1) : 0}
+                          {weeklyData.length > 1 ? Math.max(...weeklyData.slice(0, -1).map(w => w.totalPoints)).toFixed(1) : 0}
                         </div>
                         <div className="text-xs text-gray-600">Best Week</div>
                       </div>
                       <div className="text-center">
                         <div className="text-lg font-bold text-blue-600">
-                          {weeklyData.length}
+                          {Math.max(0, weeklyData.length - 1)}
                         </div>
                         <div className="text-xs text-gray-600">Total Weeks</div>
                       </div>
@@ -929,19 +926,19 @@ function HomePageContent() {
                     <>
                       <div className="text-center">
                         <div className="text-lg font-bold text-gray-900">
-                          {monthlyData.length > 0 ? (monthlyData.reduce((sum, d) => sum + d.points, 0) / monthlyData.length).toFixed(1) : 0}
+                          {monthlyData.length > 1 ? (monthlyData.slice(0, -1).reduce((sum, d) => sum + d.points, 0) / (monthlyData.length - 1)).toFixed(1) : 0}
                         </div>
                         <div className="text-xs text-gray-600">Daily Avg</div>
                       </div>
                       <div className="text-center">
                         <div className="text-lg font-bold text-green-600">
-                          {monthlyData.length > 0 ? Math.max(...monthlyData.map(d => d.points)).toFixed(1) : 0}
+                          {monthlyData.length > 1 ? Math.max(...monthlyData.slice(0, -1).map(d => d.points)).toFixed(1) : 0}
                         </div>
                         <div className="text-xs text-gray-600">Best Day</div>
                       </div>
                       <div className="text-center">
                         <div className="text-lg font-bold text-blue-600">
-                          {monthlyData.length > 0 ? Math.max(...monthlyData.map(d => d.activitiesCount)) : 0}
+                          {monthlyData.length > 1 ? Math.max(...monthlyData.slice(0, -1).map(d => d.activitiesCount)) : 0}
                         </div>
                         <div className="text-xs text-gray-600">Max Activities</div>
                       </div>

@@ -48,9 +48,47 @@ export interface CreateWeeklyPlanData {
   }>;
 }
 
+export interface ActivityAnalytics {
+  activityId: string;
+  activityLabel: string;
+  cadence: 'daily' | 'weekly';
+  targetValue: number;
+  unit: string;
+  achievedUnits: number;
+  pendingUnits: number;
+  achievementPercentage: number;
+  pointsAllocated: number;
+  pointsPerUnit: number;
+  totalPointsAchieved: number;
+  rank: number;
+  totalParticipants: number;
+  rankPercentile: number;
+  isSurpriseActivity: boolean;
+}
+
+export interface WeeklyPlanAnalytics {
+  weeklyPlanId: string;
+  profile: string;
+  weekStart: string;
+  weekEnd: string;
+  status: string;
+  activities: ActivityAnalytics[];
+  summary: {
+    totalActivities: number;
+    totalPointsAllocated: number;
+    totalPointsAchieved: number;
+  };
+}
+
 export const weeklyPlanAPI = {
  
   getOptions: () => api.get('/weeklyPlan/options'),
+  
+  getAnalytics: (weeklyPlanId: string, updateRanks = false) => 
+    api.get<{ success: boolean; message: string; data: WeeklyPlanAnalytics }>(
+      `/weeklyPlan/${weeklyPlanId}/analytics`,
+      { params: { updateRanks } }
+    ),
   
   create: (data: CreateWeeklyPlanData) => api.post('/weeklyPlan/create', data),
   
