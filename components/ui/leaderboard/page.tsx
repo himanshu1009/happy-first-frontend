@@ -11,13 +11,13 @@ type LeaderboardType = 'daily' | 'weekly';
 export default function LeaderboardPage() {
   const { selectedProfile } = useAuthStore();
   const [activeTab, setActiveTab] = useState<LeaderboardType>('weekly');
-  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
+  const [leaderboardData, setLeaderboardData] = useState<{rank:number,user:{_id:string,name:string},value:number}[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [selectedActivity, setSelectedActivity] = useState<string>('');
   const [userId, setUserId] = useState<string>('');
-  const [userRank, setUserRank] = useState<LeaderboardEntry | null>(null);
+  const [userRank, setUserRank] = useState<{rank: number, user: { _id: string; name: string }, value: number} | null>(null);
 
 
 
