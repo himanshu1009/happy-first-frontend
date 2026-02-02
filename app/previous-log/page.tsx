@@ -293,7 +293,7 @@ export default function PreviousLogPage() {
                                     {deadlineMessage}
                                 </p>
                                 <p className="text-sm text-gray-600 mt-1">
-                                    Previous day logs must be submitted before 6:00 PM of the next day
+                                    Previous day logs must be submitted before 12:00 PM of the next day
                                 </p>
                             </div>
                         </div>
