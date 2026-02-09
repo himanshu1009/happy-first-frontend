@@ -53,6 +53,7 @@ export default function CreatePlanPage() {
   const [targetOverlayActivity, setTargetOverlayActivity] = useState<Activity | null>(null);
   const [weight, setWeight] = useState<number>(selectedProfile?.profile?.weight || 0);
   const [showWeightOverlay, setShowWeightOverlay] = useState(false);
+  const [mandatoryActivity, setMandatoryActivity] = useState<Activity | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -102,8 +103,20 @@ export default function CreatePlanPage() {
   const fetchActivities = async () => {
     try {
       const response = await weeklyPlanAPI.getOptions();
-      setActivities(response.data.data.activities);
+      const fetchedActivities = response.data.data.activities;
+      setActivities(fetchedActivities);
       setTiers(response.data.data.tier);
+      
+      // Find and auto-select the mandatory "happy days" activity
+      const happyDaysActivity = fetchedActivities.find(
+        (activity) => activity.name.toLowerCase() === 'happy days'
+      );
+      
+      if (happyDaysActivity) {
+        setMandatoryActivity(happyDaysActivity);
+        // Open overlay for mandatory activity configuration
+        setTargetOverlayActivity(happyDaysActivity);
+      }
     } catch (error) {
       console.error('Failed to fetch activities:', error);
       setError('Failed to load activities. Please try again.');
@@ -112,6 +125,14 @@ export default function CreatePlanPage() {
 
   const toggleActivity = (activity: Activity) => {
     const exists = selectedActivities.find((a) => a.activityId === activity._id);
+    
+    // Prevent deselection of mandatory activity
+    if (exists && mandatoryActivity && activity._id === mandatoryActivity._id) {
+      setError('"Happy Days" is a mandatory activity and cannot be removed from your plan.');
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+    
     if (exists) {
       setSelectedActivities(selectedActivities.filter((a) => a.activityId !== activity._id));
       setTargetOverlayActivity(null);
@@ -183,8 +204,10 @@ export default function CreatePlanPage() {
   };
 
   const handleNext = () => {
-    if (selectedActivities.length < 4) {
-      setError('Please select at least 4 activities');
+    // Account for mandatory activity (3 more needed if happy days is mandatory)
+    const minRequired = mandatoryActivity ? 4 : 4;
+    if (selectedActivities.length < minRequired) {
+      setError(`Please select at least ${minRequired} activities (including Happy Days)`);
       return;
     }
 
@@ -499,6 +522,22 @@ export default function CreatePlanPage() {
               </div>
             </div>
 
+            {mandatoryActivity && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <span className="text-xl mt-0.5">{mandatoryActivity.icon}</span>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-green-900 mb-0.5">
+                      Mandatory Activity: {mandatoryActivity.name}
+                    </p>
+                    <p className="text-xs text-green-700">
+                      This activity is required for all weekly plans and has been automatically selected.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-sm text-blue-900">
@@ -535,12 +574,15 @@ export default function CreatePlanPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {filteredActivities.map((activity) => {
                 const isSelected = selectedActivities.some((a) => a.activityId === activity._id);
+                const isMandatory = mandatoryActivity && activity._id === mandatoryActivity._id;
                 return (
                   <Card
                     key={activity._id}
                     className={`cursor-pointer transition-all ${
                       isSelected
-                        ? 'border-blue-500 bg-blue-50 shadow-md'
+                        ? isMandatory
+                          ? 'border-green-500 bg-green-50 shadow-md'
+                          : 'border-blue-500 bg-blue-50 shadow-md'
                         : 'border-gray-200 hover:border-blue-300 hover:shadow'
                     }`}
                     onClick={() => toggleActivity(activity)}
@@ -549,11 +591,18 @@ export default function CreatePlanPage() {
                       <div className="flex items-center gap-3">
                         <div className="text-3xl">{activity.icon}</div>
                         <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900">{activity.name}</h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-gray-900">{activity.name}</h3>
+                            {isMandatory && (
+                              <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
+                                MANDATORY
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs text-gray-600">{activity.baseUnit}</p>
                         </div>
                         {isSelected && (
-                          <CheckCircle2 className="w-6 h-6 text-blue-600" />
+                          <CheckCircle2 className={`w-6 h-6 ${isMandatory ? 'text-green-600' : 'text-blue-600'}`} />
                         )}
                       </div>
                     </CardContent>
@@ -791,7 +840,13 @@ export default function CreatePlanPage() {
       {targetOverlayActivity && (
         <div
           className="fixed inset-0 backdrop-blur-2xl  bg-opacity-50 flex items-center justify-center p-4 z-50"
-          onClick={() => setTargetOverlayActivity(null)}
+          onClick={() => {
+            // Prevent closing if it's the mandatory activity
+            const isMandatory = mandatoryActivity && targetOverlayActivity._id === mandatoryActivity._id;
+            if (!isMandatory) {
+              setTargetOverlayActivity(null);
+            }
+          }}
         >
           <Card
             className="w-full max-w-md"
@@ -813,6 +868,7 @@ export default function CreatePlanPage() {
               <TargetSelectionForm
                 activity={targetOverlayActivity}
                 tiers={tiers}
+                isMandatory={mandatoryActivity?._id === targetOverlayActivity._id}
                 onConfirm={confirmActivitySelection}
                 onCancel={() => setTargetOverlayActivity(null)}
               />
@@ -828,11 +884,13 @@ export default function CreatePlanPage() {
 function TargetSelectionForm({
   activity,
   tiers,
+  isMandatory = false,
   onConfirm,
   onCancel,
 }: {
   activity: Activity;
   tiers: number;
+  isMandatory?: boolean;
   onConfirm: (targetValue: number, cadence: 'daily' | 'weekly') => void;
   onCancel: () => void;
 }) {
@@ -855,6 +913,18 @@ function TargetSelectionForm({
 
   return (
     <div className="space-y-4">
+      {/* Mandatory Activity Notice */}
+      {isMandatory && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          <p className="text-sm font-semibold text-green-900 mb-1">
+            ⚠️ Mandatory Activity
+          </p>
+          <p className="text-xs text-green-700">
+            This activity is required. Please configure your target to continue.
+          </p>
+        </div>
+      )}
+
       {/* Cadence Selection */}
       {activity.allowedCadence.length > 1 && (
         <div>
@@ -908,17 +978,19 @@ function TargetSelectionForm({
 
       {/* Action Buttons */}
       <div className="flex gap-3 pt-2">
-        <Button
-          onClick={onCancel}
-          variant="outline"
-          className="flex-1"
-        >
-          Cancel
-        </Button>
+        {!isMandatory && (
+          <Button
+            onClick={onCancel}
+            variant="outline"
+            className="flex-1"
+          >
+            Cancel
+          </Button>
+        )}
         <Button
           onClick={handleConfirm}
           disabled={targetValue < minVal || targetValue > maxVal || !targetValue}
-          className="flex-1"
+          className={isMandatory ? "w-full" : "flex-1"}
         >
           Confirm
         </Button>
