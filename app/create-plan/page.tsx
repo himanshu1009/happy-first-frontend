@@ -109,7 +109,7 @@ export default function CreatePlanPage() {
       
       // Find and auto-select the mandatory "happy days" activity
       const happyDaysActivity = fetchedActivities.find(
-        (activity) => activity.name.toLowerCase() === 'happy days'
+        (activity: Activity) => activity.name.toLowerCase() === 'happy days'
       );
       
       if (happyDaysActivity) {
