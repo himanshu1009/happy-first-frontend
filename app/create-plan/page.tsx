@@ -49,9 +49,11 @@ export default function CreatePlanPage() {
   const [showTourButton, setShowTourButton] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<'body' | 'mind' | 'soul'>('body');
+  const [visitedCategories, setVisitedCategories] = useState<Set<'body' | 'mind' | 'soul'>>(new Set(['body']));
   const [targetOverlayActivity, setTargetOverlayActivity] = useState<Activity | null>(null);
   const [weight, setWeight] = useState<number>(selectedProfile?.profile?.weight || 0);
   const [showWeightOverlay, setShowWeightOverlay] = useState(false);
+  const [mandatoryActivity, setMandatoryActivity] = useState<Activity | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -101,8 +103,20 @@ export default function CreatePlanPage() {
   const fetchActivities = async () => {
     try {
       const response = await weeklyPlanAPI.getOptions();
-      setActivities(response.data.data.activities);
+      const fetchedActivities = response.data.data.activities;
+      setActivities(fetchedActivities);
       setTiers(response.data.data.tier);
+      
+      // Find and auto-select the mandatory "happy days" activity
+      const happyDaysActivity = fetchedActivities.find(
+        (activity: Activity) => activity.name.toLowerCase() === 'happy days'
+      );
+      
+      if (happyDaysActivity) {
+        setMandatoryActivity(happyDaysActivity);
+        // Open overlay for mandatory activity configuration
+        setTargetOverlayActivity(happyDaysActivity);
+      }
     } catch (error) {
       console.error('Failed to fetch activities:', error);
       setError('Failed to load activities. Please try again.');
@@ -111,6 +125,14 @@ export default function CreatePlanPage() {
 
   const toggleActivity = (activity: Activity) => {
     const exists = selectedActivities.find((a) => a.activityId === activity._id);
+    
+    // Prevent deselection of mandatory activity
+    if (exists && mandatoryActivity && activity._id === mandatoryActivity._id) {
+      setError('"Happy Days" is a mandatory activity and cannot be removed from your plan.');
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+    
     if (exists) {
       setSelectedActivities(selectedActivities.filter((a) => a.activityId !== activity._id));
       setTargetOverlayActivity(null);
@@ -143,6 +165,11 @@ export default function CreatePlanPage() {
     (activity) => activity.category.toLowerCase() === selectedCategory.toLowerCase()
   );
 
+  const handleCategoryChange = (category: 'body' | 'mind' | 'soul') => {
+    setSelectedCategory(category);
+    setVisitedCategories(prev => new Set([...prev, category]));
+  };
+
   const updateActivityTarget = (activityId: string, field: string, value: string | number) => {
     setSelectedActivities(
       selectedActivities.map((act) =>
@@ -151,11 +178,50 @@ export default function CreatePlanPage() {
     );
   };
 
+  // Check which categories have selected activities
+  const getCategoryStatus = () => {
+    const bodyActivities = selectedActivities.filter(act => {
+      const activity = activities.find(a => a._id === act.activityId);
+      return activity?.category.toLowerCase() === 'body';
+    });
+    const mindActivities = selectedActivities.filter(act => {
+      const activity = activities.find(a => a._id === act.activityId);
+      return activity?.category.toLowerCase() === 'mind';
+    });
+    const soulActivities = selectedActivities.filter(act => {
+      const activity = activities.find(a => a._id === act.activityId);
+      return activity?.category.toLowerCase() === 'soul';
+    });
+
+    return {
+      body: bodyActivities.length > 0,
+      mind: mindActivities.length > 0,
+      soul: soulActivities.length > 0,
+      bodyCount: bodyActivities.length,
+      mindCount: mindActivities.length,
+      soulCount: soulActivities.length,
+    };
+  };
+
   const handleNext = () => {
-    if (selectedActivities.length < 4) {
-      setError('Please select at least 4 activities');
+    // Account for mandatory activity (3 more needed if happy days is mandatory)
+    const minRequired = mandatoryActivity ? 4 : 4;
+    if (selectedActivities.length < minRequired) {
+      setError(`Please select at least ${minRequired} activities (including Happy Days)`);
       return;
     }
+
+    // Check if all categories have been visited
+    if (visitedCategories.size < 3) {
+      const allCategories: ('body' | 'mind' | 'soul')[] = ['body', 'mind', 'soul'];
+      const unvisitedCategories = allCategories.filter(cat => !visitedCategories.has(cat));
+      const categoryNames = unvisitedCategories.map(cat => 
+        cat.charAt(0).toUpperCase() + cat.slice(1)
+      );
+      setError(`Please browse through all categories before proceeding. Not visited: ${categoryNames.join(', ')}`);
+      return;
+    }
+
     setError('');
     setStep('configure');
   };
@@ -376,39 +442,51 @@ export default function CreatePlanPage() {
           <div className="space-y-4">
             {/* Category Selection */}
             <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Select Category</h3>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Browse All Categories</h3>
               <div className="grid grid-cols-3 gap-2">
                 <button
-                  onClick={() => setSelectedCategory('body')}
-                  className={`p-3 rounded-lg font-medium text-sm transition-all ${
+                  onClick={() => handleCategoryChange('body')}
+                  className={`relative p-3 rounded-lg font-medium text-sm transition-all ${
                     selectedCategory === 'body'
                       ? 'bg-blue-500 text-white shadow-md'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
                   💪 Body
+                  {visitedCategories.has('body') && (
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-green-500 rounded-full"></span>
+                  )}
                 </button>
                 <button
-                  onClick={() => setSelectedCategory('mind')}
-                  className={`p-3 rounded-lg font-medium text-sm transition-all ${
+                  onClick={() => handleCategoryChange('mind')}
+                  className={`relative p-3 rounded-lg font-medium text-sm transition-all ${
                     selectedCategory === 'mind'
                       ? 'bg-purple-500 text-white shadow-md'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
                   🧠 Mind
+                  {visitedCategories.has('mind') && (
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-green-500 rounded-full"></span>
+                  )}
                 </button>
                 <button
-                  onClick={() => setSelectedCategory('soul')}
-                  className={`p-3 rounded-lg font-medium text-sm transition-all ${
+                  onClick={() => handleCategoryChange('soul')}
+                  className={`relative p-3 rounded-lg font-medium text-sm transition-all ${
                     selectedCategory === 'soul'
                       ? 'bg-green-500 text-white shadow-md'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
                   ✨ Soul
+                  {visitedCategories.has('soul') && (
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-green-500 rounded-full"></span>
+                  )}
                 </button>
               </div>
+              <p className="text-xs text-gray-600 mt-2">
+                Visit all categories to explore available activities
+              </p>
             </div>
 
             {/* Repeat Last Week Button */}
@@ -444,21 +522,67 @@ export default function CreatePlanPage() {
               </div>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <p className="text-sm text-blue-900">
-                <span className="font-semibold">Selected: {selectedActivities.length}</span> / Minimum: 4
-              </p>
+            {mandatoryActivity && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <span className="text-xl mt-0.5">{mandatoryActivity.icon}</span>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-green-900 mb-0.5">
+                      Mandatory Activity: {mandatoryActivity.name}
+                    </p>
+                    <p className="text-xs text-green-700">
+                      This activity is required for all weekly plans and has been automatically selected.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm text-blue-900">
+                  <span className="font-semibold">Selected: {selectedActivities.length}</span> / Minimum: 4
+                </p>
+              </div>
+              
+              {/* Category Browsing Status */}
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-gray-700 mb-2">Browsing Progress:</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium ${
+                    visitedCategories.has('body') ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                  }`}>
+                    {visitedCategories.has('body') ? '✓' : '○'} Body
+                  </div>
+                  <div className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium ${
+                    visitedCategories.has('mind') ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                  }`}>
+                    {visitedCategories.has('mind') ? '✓' : '○'} Mind
+                  </div>
+                  <div className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium ${
+                    visitedCategories.has('soul') ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                  }`}>
+                    {visitedCategories.has('soul') ? '✓' : '○'} Soul
+                  </div>
+                </div>
+                <p className="text-xs text-gray-600 mt-2">
+                  Browse all categories before proceeding ({visitedCategories.size}/3 visited)
+                </p>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {filteredActivities.map((activity) => {
                 const isSelected = selectedActivities.some((a) => a.activityId === activity._id);
+                const isMandatory = mandatoryActivity && activity._id === mandatoryActivity._id;
                 return (
                   <Card
                     key={activity._id}
                     className={`cursor-pointer transition-all ${
                       isSelected
-                        ? 'border-blue-500 bg-blue-50 shadow-md'
+                        ? isMandatory
+                          ? 'border-green-500 bg-green-50 shadow-md'
+                          : 'border-blue-500 bg-blue-50 shadow-md'
                         : 'border-gray-200 hover:border-blue-300 hover:shadow'
                     }`}
                     onClick={() => toggleActivity(activity)}
@@ -467,11 +591,18 @@ export default function CreatePlanPage() {
                       <div className="flex items-center gap-3">
                         <div className="text-3xl">{activity.icon}</div>
                         <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900">{activity.name}</h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-gray-900">{activity.name}</h3>
+                            {isMandatory && (
+                              <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
+                                MANDATORY
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs text-gray-600">{activity.baseUnit}</p>
                         </div>
                         {isSelected && (
-                          <CheckCircle2 className="w-6 h-6 text-blue-600" />
+                          <CheckCircle2 className={`w-6 h-6 ${isMandatory ? 'text-green-600' : 'text-blue-600'}`} />
                         )}
                       </div>
                     </CardContent>
@@ -709,7 +840,13 @@ export default function CreatePlanPage() {
       {targetOverlayActivity && (
         <div
           className="fixed inset-0 backdrop-blur-2xl  bg-opacity-50 flex items-center justify-center p-4 z-50"
-          onClick={() => setTargetOverlayActivity(null)}
+          onClick={() => {
+            // Prevent closing if it's the mandatory activity
+            const isMandatory = mandatoryActivity && targetOverlayActivity._id === mandatoryActivity._id;
+            if (!isMandatory) {
+              setTargetOverlayActivity(null);
+            }
+          }}
         >
           <Card
             className="w-full max-w-md"
@@ -731,6 +868,7 @@ export default function CreatePlanPage() {
               <TargetSelectionForm
                 activity={targetOverlayActivity}
                 tiers={tiers}
+                isMandatory={mandatoryActivity?._id === targetOverlayActivity._id}
                 onConfirm={confirmActivitySelection}
                 onCancel={() => setTargetOverlayActivity(null)}
               />
@@ -746,11 +884,13 @@ export default function CreatePlanPage() {
 function TargetSelectionForm({
   activity,
   tiers,
+  isMandatory = false,
   onConfirm,
   onCancel,
 }: {
   activity: Activity;
   tiers: number;
+  isMandatory?: boolean;
   onConfirm: (targetValue: number, cadence: 'daily' | 'weekly') => void;
   onCancel: () => void;
 }) {
@@ -773,6 +913,18 @@ function TargetSelectionForm({
 
   return (
     <div className="space-y-4">
+      {/* Mandatory Activity Notice */}
+      {isMandatory && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          <p className="text-sm font-semibold text-green-900 mb-1">
+            ⚠️ Mandatory Activity
+          </p>
+          <p className="text-xs text-green-700">
+            This activity is required. Please configure your target to continue.
+          </p>
+        </div>
+      )}
+
       {/* Cadence Selection */}
       {activity.allowedCadence.length > 1 && (
         <div>
@@ -826,17 +978,19 @@ function TargetSelectionForm({
 
       {/* Action Buttons */}
       <div className="flex gap-3 pt-2">
-        <Button
-          onClick={onCancel}
-          variant="outline"
-          className="flex-1"
-        >
-          Cancel
-        </Button>
+        {!isMandatory && (
+          <Button
+            onClick={onCancel}
+            variant="outline"
+            className="flex-1"
+          >
+            Cancel
+          </Button>
+        )}
         <Button
           onClick={handleConfirm}
           disabled={targetValue < minVal || targetValue > maxVal || !targetValue}
-          className="flex-1"
+          className={isMandatory ? "w-full" : "flex-1"}
         >
           Confirm
         </Button>
